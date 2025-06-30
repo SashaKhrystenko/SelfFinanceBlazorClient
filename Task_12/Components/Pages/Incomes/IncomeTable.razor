@@ -1,0 +1,49 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>@nameof(IncomeModel.Date)</td>
+            <td>@nameof(IncomeModel.Category)</td>
+            <td>@nameof(IncomeModel.Amount)</td>
+            <td>Update</td>
+            <td>Delete</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (IncomeModel income in Incomes)
+        {
+            <tr>
+                <td>@income.Date</td>
+                <td>@income?.Category</td>
+                <td>@income.Amount</td>
+                <td>
+                    <button class="btn btn-primary">Update</button>
+                </td>
+                <td>
+                    <button class="btn btn-primary" @onclick="() => DeleteIncomeAsync(income)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code 
+{
+    [Inject] //TODO: Зробити оновлення доходу
+    public Client Client { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<IncomeModel> Incomes { get; set; }
+
+    [Parameter]
+    public EventCallback OnDelete { get; set; }
+
+    public async Task DeleteIncomeAsync(IncomeModel model)
+    {
+        await Client.DeleteIncomeAsync(model);
+
+        await OnDelete.InvokeAsync();
+    }
+}

@@ -1,11 +1,61 @@
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Task_12;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Net.Http;
+using Task_12.Components;
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
-builder.RootComponents.Add<App>("#app");
-builder.RootComponents.Add<HeadOutlet>("head::after");
+namespace Task_12
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+            ConfigureService(builder.Services);
 
-await builder.Build().RunAsync();
+            WebApplication app = builder.Build();
+
+            ConfigureApp(app);
+
+            app.Run();
+        }
+
+        private static void ConfigureService(IServiceCollection services)
+        {
+            services.AddScoped(sp =>
+            {
+                HttpClient httpClient = new()
+                {
+                    BaseAddress = new Uri("https://localhost:7089/")
+                };
+
+                return new Client("https://localhost:7089/", httpClient);
+            });
+
+            services.AddRazorComponents()
+                .AddInteractiveServerComponents()
+            ;
+        }
+
+        private static void ConfigureApp(WebApplication app)
+        {
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Error", createScopeForErrors: true);
+
+                app.UseHsts();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseStaticFiles();
+            app.UseAntiforgery();
+
+            app.MapRazorComponents<App>()
+                .AddInteractiveServerRenderMode()
+            ;
+        }
+    }
+}

@@ -1,0 +1,27 @@
+﻿@page "/incomes"
+@rendermode InteractiveServer
+
+@inject Client client
+
+<PageTitle>Incomes</PageTitle>
+
+<h1>Incomes</h1>
+<IncomeTable Incomes="@incomes" OnDelete="@UpdateIncomeListData"/>
+
+<AddIncomeForm incomeCategories="@incomeCategories" OnIncomeAdded="@UpdateIncomeListData"/>
+
+@code {
+    private IReadOnlyList<IncomeModel> incomes;
+    private IReadOnlyList<IncomeCategoryModel> incomeCategories;
+
+    public async Task UpdateIncomeListData()
+    {
+        incomes = await client.GetAllIncomesAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        incomes = client.GetAllIncomesAsync().Result;
+        incomeCategories = client.GetAllIncomeCategoriesAsync().Result;
+    }
+}

@@ -1,0 +1,45 @@
+﻿<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>@nameof(ExpenseModel.Date)</td>
+            <td>@nameof(ExpenseModel.Category)</td>
+            <td>@nameof(ExpenseModel.Amount)</td>
+            <td>Update</td>
+            <td>Delete</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (ExpenseModel expense in Expenses)
+        {
+            <tr>
+                <td>@expense.Date</td>
+                <td>@expense?.Category</td>
+                <td>@expense.Amount</td>
+                <td>
+                    <button class="btn btn-primary">Update</button>
+                </td>
+                <td>
+                    <button class="btn btn-primary" @onclick="() => DeleteExpenseAsync(expense)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Inject] //TODO: Зробити оновлення розходів
+    public Client Client { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<ExpenseModel> Expenses { get; set; }
+
+    [Parameter]
+    public EventCallback OnDeleteExpense { get; set; }
+
+    public async Task DeleteExpenseAsync(ExpenseModel expense)
+    {
+        await Client.DeleteExpenseAsync(expense);
+
+        await OnDeleteExpense.InvokeAsync();
+    }
+}

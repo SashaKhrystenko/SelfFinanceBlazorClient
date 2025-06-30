@@ -1,0 +1,56 @@
+﻿<EditForm Model="@income" OnValidSubmit="AddIncome">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="p-1">
+        <label>Category:</label>
+        <InputSelect class="form-select" @bind-Value="income.Category">
+            <option value="" disabled selected hidden></option>
+            @foreach (IncomeCategoryModel incomeCategory in incomeCategories)
+            {
+                <option value="@incomeCategory.Name">@incomeCategory.Name</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="p-1">
+        <label>Amount:</label>
+        <InputNumber class="form-control no-spinner" @bind-Value="income.Amount" />
+    </div>
+
+    <div class="p-1">
+        <button class="btn btn-primary" type="submit">Add</button>
+    </div>
+</EditForm>
+
+@code {
+    [Inject]
+    public Client Client { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<IncomeCategoryModel> incomeCategories { get; set; }
+
+    [Parameter]
+    public EventCallback OnIncomeAdded { get; set; }
+
+    IncomeModel income = new();
+
+    public async Task AddIncome()
+    {
+        if (income.Amount <= 0)
+        {
+            return;
+        }
+
+        await Client.AddIncomeAsync(income.Amount, income.Category);
+
+        income = new();
+
+        await OnIncomeAdded.InvokeAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        incomeCategories = Client.GetAllIncomeCategoriesAsync().Result;
+    }
+}
