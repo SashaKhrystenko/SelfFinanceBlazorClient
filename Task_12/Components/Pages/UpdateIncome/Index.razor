@@ -1,0 +1,37 @@
+﻿@page "/incomes/update-income/{id:guid}"
+@rendermode InteractiveServer
+
+<PageTitle>Update income</PageTitle>
+
+<h1>Update income</h1>
+
+<UpdateIncomeForm Income="_incomeModel" IncomeCategories="_incomeCategories" />
+
+<div class="p-1">
+    <button class="btn btn-outline-danger w-100" @onclick="NagigateToIncomePage">Back to income page </button>
+</div>
+
+@code {
+    [Inject]
+    private Client _client { get; set; }
+
+    [Inject]
+    private NavigationManager _navigationManager { get; set; }
+
+    [Parameter]
+    public Guid id { get; set; }
+
+    private IReadOnlyList<IncomeCategoryModel> _incomeCategories;
+    private IncomeModel _incomeModel;
+
+    protected override void OnInitialized()
+    {
+        _incomeModel = _client.GetIncomeByIdAsync(id).Result;
+        _incomeCategories = _client.GetAllIncomeCategoriesAsync().Result;
+    }
+
+    private void NagigateToIncomePage()
+    {
+        _navigationManager.NavigateTo("/incomes");
+    }
+}

@@ -1,8 +1,6 @@
 ﻿@page "/expenses"
 @rendermode InteractiveServer
 
-@inject Client client
-
 <PageTitle>Expenses</PageTitle>
 
 <h1>Expenses</h1>
@@ -15,14 +13,17 @@
     private IReadOnlyList<ExpenseModel> _expenses;
     private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
 
+    [Inject]
+    private Client _client { get; set; }
+
     protected override void OnInitialized()
     {
-        _expenses = client.GetAllExpensesAsync().Result;
-        _expenseCategories = client.GetAllExpenseCategoriesAsync().Result;
+        _expenses = _client.GetAllExpensesAsync().Result;
+        _expenseCategories = _client.GetAllExpenseCategoriesAsync().Result;
     }
 
     public async Task UpdateExpenseListData()
     {
-        _expenses = await client.GetAllExpensesAsync();
+        _expenses = await _client.GetAllExpensesAsync();
     }
 }

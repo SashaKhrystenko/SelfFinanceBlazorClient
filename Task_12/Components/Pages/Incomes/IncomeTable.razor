@@ -19,7 +19,7 @@
                 <td>@income?.Category</td>
                 <td>@income.Amount</td>
                 <td>
-                    <button class="btn btn-primary">Update</button>
+                    <button class="btn btn-primary" @onclick="() => NavigateToUpdateInconePage(income.Id)">Update</button>
                 </td>
                 <td>
                     <button class="btn btn-primary" @onclick="() => DeleteIncomeAsync(income)">Delete</button>
@@ -32,7 +32,10 @@
 @code 
 {
     [Inject] //TODO: Зробити оновлення доходу
-    public Client Client { get; set; }
+    private Client _client { get; set; }
+
+    [Inject]
+    private NavigationManager _navigationManager { get; set; }
 
     [Parameter]
     public IReadOnlyList<IncomeModel> Incomes { get; set; }
@@ -42,8 +45,13 @@
 
     public async Task DeleteIncomeAsync(IncomeModel model)
     {
-        await Client.DeleteIncomeAsync(model);
+        await _client.DeleteIncomeAsync(model);
 
         await OnDelete.InvokeAsync();
+    }
+
+    public void NavigateToUpdateInconePage(Guid id)
+    {
+        _navigationManager.NavigateTo($"/incomes/update-income/{id}");
     }
 }

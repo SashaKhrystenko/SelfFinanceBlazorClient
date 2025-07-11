@@ -2,7 +2,7 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <div class="p-1">
+    <div class="pb-1">
         <label>Category:</label>
         <InputSelect class="form-select" @bind-Value="income.Category">
             <option value="" disabled selected hidden></option>
@@ -13,19 +13,19 @@
         </InputSelect>
     </div>
 
-    <div class="p-1">
+    <div class="pb-1">
         <label>Amount:</label>
         <InputNumber class="form-control no-spinner" @bind-Value="income.Amount" />
     </div>
 
-    <div class="p-1">
+    <div class="pb-1">
         <button class="btn btn-primary" type="submit">Add</button>
     </div>
 </EditForm>
 
 @code {
     [Inject]
-    public Client Client { get; set; }
+    private Client _client { get; set; }
 
     [Parameter]
     public IReadOnlyList<IncomeCategoryModel> incomeCategories { get; set; }
@@ -35,22 +35,17 @@
 
     IncomeModel income = new();
 
-    public async Task AddIncome()
+    public async Task AddIncome() //TODO: зробити норм валідацію і попап для неї
     {
         if (income.Amount <= 0)
         {
             return;
         }
 
-        await Client.AddIncomeAsync(income.Amount, income.Category);
+        await _client.AddIncomeAsync(income.Amount, income.Category);
 
         income = new();
 
         await OnIncomeAdded.InvokeAsync();
-    }
-
-    protected override void OnInitialized()
-    {
-        incomeCategories = Client.GetAllIncomeCategoriesAsync().Result;
     }
 }

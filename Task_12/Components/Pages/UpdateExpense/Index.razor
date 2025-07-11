@@ -1,0 +1,35 @@
+﻿@page "/expenses/update-expense/{id:guid}"
+@rendermode InteractiveServer
+
+<PageTitle>Update expense</PageTitle>
+
+<h1>Update expense</h1>
+
+<UpdateIncomeForm Expense="_expenseModel" ExpenseCategories="_expenseCategories" />
+
+<button class="btn btn-outline-danger w-100" @onclick="NagigateToExpensePage">Back to income page </button>
+
+@code {
+    [Inject]
+    private Client _client { get; set; }
+
+    [Inject]
+    private NavigationManager _navigationManager { get; set; }
+
+    [Parameter]
+    public Guid id { get; set; }
+
+    private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
+    private ExpenseModel _expenseModel;
+
+    protected override void OnInitialized()
+    {
+        _expenseModel = _client.GetExpenseByIdAsync(id).Result;
+        _expenseCategories = _client.GetAllExpenseCategoriesAsync().Result;
+    }
+
+    private void NagigateToExpensePage()
+    {
+        _navigationManager.NavigateTo("/expenses");
+    }
+}

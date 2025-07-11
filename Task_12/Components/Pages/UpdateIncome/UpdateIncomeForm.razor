@@ -1,0 +1,46 @@
+﻿<EditForm Model="@Income" OnValidSubmit="UpdateIncome">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="pb-1">
+        <label>Date:</label>
+        <InputDate class="form-control" @bind-Value="Income.Date" />
+    </div>
+
+    <div class="pb-1">
+        <label>Category:</label>
+        <InputSelect class="form-select" @bind-Value="Income.Category">
+            <option value="" disabled selected hidden></option>
+            @foreach (IncomeCategoryModel incomeCategory in IncomeCategories)
+            {
+                <option value="@incomeCategory.Name">@incomeCategory.Name</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="pb-1">
+        <label>Amount:</label>
+        <InputNumber class="form-control no-spinner" @bind-Value="Income.Amount">@Income.Amount</InputNumber>
+    </div>
+
+    <div class="pb-1">
+        <button class="btn btn-primary w-100" type="submit">Update</button>
+    </div>
+</EditForm>
+
+
+@code {
+    [Inject]
+    private Client _client { get; set; }
+
+    [Parameter]
+    public IncomeModel Income { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<IncomeCategoryModel> IncomeCategories { get; set; }
+
+    private void UpdateIncome() //TODO: Добавити валідацію
+    {
+        _client.UpdateIncomeAsync(Income);
+    }
+}

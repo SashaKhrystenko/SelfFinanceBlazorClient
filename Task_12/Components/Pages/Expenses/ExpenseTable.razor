@@ -16,7 +16,7 @@
                 <td>@expense?.Category</td>
                 <td>@expense.Amount</td>
                 <td>
-                    <button class="btn btn-primary">Update</button>
+                    <button class="btn btn-primary" @onclick="() => NavigateToUpdateExpensePage(expense.Id)">Update</button>
                 </td>
                 <td>
                     <button class="btn btn-primary" @onclick="() => DeleteExpenseAsync(expense)">Delete</button>
@@ -27,8 +27,11 @@
 </table>
 
 @code {
-    [Inject] //TODO: Зробити оновлення розходів
-    public Client Client { get; set; }
+    [Inject]
+    private Client _client { get; set; }
+
+    [Inject]
+    private NavigationManager _navigationManager { get; set; }
 
     [Parameter]
     public IReadOnlyList<ExpenseModel> Expenses { get; set; }
@@ -36,10 +39,15 @@
     [Parameter]
     public EventCallback OnDeleteExpense { get; set; }
 
-    public async Task DeleteExpenseAsync(ExpenseModel expense)
+    private async Task DeleteExpenseAsync(ExpenseModel expense)
     {
-        await Client.DeleteExpenseAsync(expense);
+        await _client.DeleteExpenseAsync(expense);
 
         await OnDeleteExpense.InvokeAsync();
+    }
+
+    private void NavigateToUpdateExpensePage(Guid id)
+    {
+        _navigationManager.NavigateTo($"/expenses/update-expense/{id}");
     }
 }
