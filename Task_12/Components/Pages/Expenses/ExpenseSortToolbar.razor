@@ -1,0 +1,56 @@
+﻿@using Task_12.SortOptions
+
+<div class="d-flex justify-content-end align-items-center">
+    <label class="me-2">Sort by</label>
+
+    <InputSelect class="form-select form-select-sm w-auto me-2" @bind-Value="_expenseSortOption">
+        <option value="@ExpenseFilter.Date">@ExpenseFilter.Date</option>
+        <option value="@ExpenseFilter.Category">@ExpenseFilter.Category</option>
+        <option value="@ExpenseFilter.Amount">@ExpenseFilter.Amount</option>
+    </InputSelect>
+
+    <Button class="btn" @onclick="OnSortOrderButtonClicked">
+        @if (ExpenseSortOption.ByDescending)
+        {
+            <i class="bi bi-sort-down"></i>
+        }
+        else
+        {
+            <i class="bi bi-sort-up"></i>
+        }
+    </Button>
+</div>
+
+@code {
+    private ExpenseFilter _expenseSortOption
+    {
+        get
+        {
+            return ExpenseSortOption.ExpenseFilter;
+        }
+        set
+        {
+            ExpenseSortOption.ExpenseFilter = value;
+
+            OnSelectbarChanges.InvokeAsync();
+        }
+    }
+
+    [Parameter]
+    public ExpenseSortOption ExpenseSortOption { get; set; }
+
+    [Parameter]
+    public EventCallback OnSelectbarChanges { get; set; }
+
+    private void OnSortOrderButtonClicked()
+    {
+        ExpenseSortOption.ByDescending = !ExpenseSortOption.ByDescending;
+
+        OnSelectbarChanges.InvokeAsync();
+    }
+
+    private void OnFilterChanged()
+    {
+        OnSelectbarChanges.InvokeAsync();
+    }
+}

@@ -5,11 +5,17 @@
 
 <h1>Update expense</h1>
 
-<UpdateIncomeForm Expense="_expenseModel" ExpenseCategories="_expenseCategories" />
+<UpdateExpenseForm Expense="_expenseModel" ExpenseCategories="_expenseCategories" OnInvalidSubmit="ShowPopup" />
 
 <button class="btn btn-outline-danger w-100" @onclick="NagigateToExpensePage">Back to income page </button>
 
+<Popup @ref="_popup"></Popup>
+
 @code {
+    private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
+    private ExpenseModel _expenseModel;
+    private Popup _popup;
+
     [Inject]
     private Client _client { get; set; }
 
@@ -18,9 +24,6 @@
 
     [Parameter]
     public Guid id { get; set; }
-
-    private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
-    private ExpenseModel _expenseModel;
 
     protected override void OnInitialized()
     {
@@ -31,5 +34,10 @@
     private void NagigateToExpensePage()
     {
         _navigationManager.NavigateTo("/expenses");
+    }
+
+    private void ShowPopup()
+    {
+        _popup.ShowPopup();
     }
 }

@@ -28,7 +28,6 @@
     </div>
 </EditForm>
 
-
 @code {
     [Inject]
     private Client _client { get; set; }
@@ -39,8 +38,21 @@
     [Parameter]
     public IReadOnlyList<ExpenseCategoryModel> ExpenseCategories { get; set; }
 
+    [Parameter]
+    public EventCallback OnInvalidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
     private void UpdateExpanse() //TODO: Добавити валідацію
     {
+        if (Expense.Amount <= 0)
+        {
+            OnInvalidSubmit.InvokeAsync();
+
+            return;
+        }
+
         _client.UpdateExpenseAsync(Expense);
     }
 }

@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Blazor.Bootstrap" Version="3.4.0" />
     <PackageReference Include="NSwag.ConsoleCore" Version="8.8.0" />
     <PackageReference Include="NSwag.Core" Version="14.4.0" />
   </ItemGroup>

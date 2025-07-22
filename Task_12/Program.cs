@@ -37,6 +37,8 @@ namespace Task_12
             services.AddRazorComponents()
                 .AddInteractiveServerComponents()
             ;
+
+            services.AddBlazorBootstrap();
         }
 
         private static void ConfigureApp(WebApplication app)

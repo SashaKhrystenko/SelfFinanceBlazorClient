@@ -5,25 +5,35 @@
 
 <h1>Expenses</h1>
 
-<ExpenseTable Expenses="@_expenses" OnDeleteExpense="UpdateExpenseListData"/>
+<ExpenseSortToolbar ExpenseSortOption="expenseSortOption" OnSelectbarChanges="UpdateExpenseListData" />
 
-<AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="UpdateExpenseListData"/>
+<ExpenseTable Expenses="@_listItems" OnDeleteExpense="UpdateExpenseListData" />
+
+<AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="UpdateExpenseListData" />
 
 @code {
+    private ExpenseSortOption expenseSortOption = new()
+    {
+        ExpenseFilter = ExpenseFilter.Date,
+        ByDescending = true
+    };
+
     private IReadOnlyList<ExpenseModel> _expenses;
     private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
+
+    private IReadOnlyList<ExpenseModel> _listItems;
 
     [Inject]
     private Client _client { get; set; }
 
-    protected override void OnInitialized()
+    public void UpdateExpenseListData()
     {
-        _expenses = _client.GetAllExpensesAsync().Result;
-        _expenseCategories = _client.GetAllExpenseCategoriesAsync().Result;
+        _expenses = _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending).Result;
     }
 
-    public async Task UpdateExpenseListData()
+    protected override void OnInitialized()
     {
-        _expenses = await _client.GetAllExpensesAsync();
+        _expenses = _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending).Result;
+        _expenseCategories = _client.GetSortedExpenseCategoriesAsync(ExpenseCategoryFilter.Name, byDescending: false).Result;
     }
 }
