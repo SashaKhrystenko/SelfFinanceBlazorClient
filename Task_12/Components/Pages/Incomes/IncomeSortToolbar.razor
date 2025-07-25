@@ -1,14 +1,14 @@
 ﻿<div class="d-flex justify-content-end align-items-center">
     <label class="me-2">Sort by</label>
 
-    <InputSelect class="form-select form-select-sm w-auto me-2" @bind-Value="_expenseFilter">
-        <option value="@ExpenseFilter.Date">@ExpenseFilter.Date</option>
-        <option value="@ExpenseFilter.Category">@ExpenseFilter.Category</option>
-        <option value="@ExpenseFilter.Amount">@ExpenseFilter.Amount</option>
+    <InputSelect class="form-select form-select-sm w-auto me-2" @bind-Value="_incomeFilter">
+        <option value="@IncomeFilter.Date">@IncomeFilter.Date</option>
+        <option value="@IncomeFilter.Category">@IncomeFilter.Category</option>
+        <option value="@IncomeFilter.Amount">@IncomeFilter.Amount</option>
     </InputSelect>
 
     <Button class="btn" @onclick="OnSortOrderButtonClicked">
-        @if (ExpenseSortOption.ByDescending)
+        @if (IncomeSortOption.ByDescending)
         {
             <i class="bi bi-sort-down"></i>
         }
@@ -20,29 +20,29 @@
 </div>
 
 @code {
-    private ExpenseFilter _expenseFilter
+    private IncomeFilter _incomeFilter
     {
         get
         {
-            return ExpenseSortOption.ExpenseFilter;
+            return IncomeSortOption.IncomeFilter;
         }
         set
         {
-            ExpenseSortOption.ExpenseFilter = value;
+            IncomeSortOption.IncomeFilter = value;
 
             OnSelectbarChanges.InvokeAsync();
         }
     }
 
     [Parameter]
-    public ExpenseSortOption ExpenseSortOption { get; set; }
+    public IncomeSortOption IncomeSortOption { get; set; }
 
     [Parameter]
     public EventCallback OnSelectbarChanges { get; set; }
 
     private void OnSortOrderButtonClicked()
     {
-        ExpenseSortOption.ByDescending = !ExpenseSortOption.ByDescending;
+        IncomeSortOption.ByDescending = !IncomeSortOption.ByDescending;
 
         OnSelectbarChanges.InvokeAsync();
     }

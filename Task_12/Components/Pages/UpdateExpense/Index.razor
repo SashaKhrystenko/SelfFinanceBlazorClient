@@ -5,16 +5,17 @@
 
 <h1>Update expense</h1>
 
-<UpdateExpenseForm Expense="_expenseModel" ExpenseCategories="_expenseCategories" OnInvalidSubmit="ShowPopup" />
+<UpdateExpenseForm Expense="_expenseModel" ExpenseCategories="_expenseCategories" OnInvalidSubmit="ShowErrorPopup" OnValidSubmit="ShowSuccessPopup" />
 
-<button class="btn btn-outline-danger w-100" @onclick="NagigateToExpensePage">Back to income page </button>
+<button class="btn btn-outline-danger w-100 my-1" @onclick="NagigateToExpensePage">Back to income page </button>
 
 <Popup @ref="_popup"></Popup>
 
 @code {
-    private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
     private ExpenseModel _expenseModel;
     private Popup _popup;
+
+    private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
 
     [Inject]
     private Client _client { get; set; }
@@ -36,8 +37,13 @@
         _navigationManager.NavigateTo("/expenses");
     }
 
-    private void ShowPopup()
+    private void ShowSuccessPopup()
     {
-        _popup.ShowPopup();
+        _popup.ShowSuccess("Expense was updated.");
+    }
+
+    private void ShowErrorPopup(string message)
+    {
+        _popup.ShowError(message);
     }
 }

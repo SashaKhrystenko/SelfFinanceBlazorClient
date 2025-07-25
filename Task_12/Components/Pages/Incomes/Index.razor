@@ -4,25 +4,69 @@
 <PageTitle>Incomes</PageTitle>
 
 <h1>Incomes</h1>
-<IncomeTable Incomes="@_incomes" OnDelete="@UpdateIncomeListData"/>
 
-<AddIncomeForm incomeCategories="@_incomeCategories" OnIncomeAdded="@UpdateIncomeListData"/>
+<IncomeSortToolbar IncomeSortOption="_incomeSortOption" OnSelectbarChanges="UpdateIncomeListData" />
+
+<IncomeTable Incomes="_itemsOnPage" OnDelete="@UpdateIncomeListData" />
+
+<Paginator @ref="_paginator" ItemList="_incomes" AmountOfItemsOnPage="_amountOfItemsOnList" OnPageChange="ShowItemsOnPage" />
+
+<AddIncomeForm incomeCategories="@_incomeCategories" OnIncomeAdded="@ShowSuccessPopupAndUpdateData" OnInvalidDataInput="ShowErrorPopup" />
+
+<Popup @ref="_popup" />
 
 @code {
+    private IncomeSortOption _incomeSortOption = new()
+    {
+        IncomeFilter = IncomeFilter.Date,
+        ByDescending = true
+    };
+
+    private Paginator<IncomeModel> _paginator;
+    private Popup _popup;
+
     private IReadOnlyList<IncomeModel> _incomes;
     private IReadOnlyList<IncomeCategoryModel> _incomeCategories;
 
+    private IEnumerable<IncomeModel> _itemsOnPage;
+
+    private int _amountOfItemsOnList = 5;
+
     [Inject]
-    public Client client { get; set; }
+    private Client _client { get; set; }
 
     protected override void OnInitialized()
     {
-        _incomes = client.GetAllIncomesAsync().Result;
-        _incomeCategories = client.GetAllIncomeCategoriesAsync().Result;
+        _incomes = _client.GetSortedIncomesAsync(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending).Result;
+        _incomeCategories = _client.GetSortedIncomeCategoriesAsync(IncomeCategoryFilter.Name, byDescending: false).Result;
+
+        _itemsOnPage = _incomes.Take(_amountOfItemsOnList);
     }
 
-    protected async Task UpdateIncomeListData()
+    private void UpdateIncomeListData()
     {
-        _incomes = await client.GetAllIncomesAsync();
+        _incomes = _client.GetSortedIncomesAsync(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending).Result;
+
+        ShowItemsOnPage();
+    }
+
+    private void ShowItemsOnPage()
+    {
+        _itemsOnPage = _incomes
+            .Skip((_paginator.CurrentPage - 1) * _amountOfItemsOnList)
+            .Take(_amountOfItemsOnList)
+        ;
+    }
+
+    private void ShowSuccessPopupAndUpdateData()
+    {
+        _popup.ShowSuccess("Income was added.");
+
+        UpdateIncomeListData();
+    }
+
+    private void ShowErrorPopup(string message)
+    {
+        _popup.ShowError(message);
     }
 }

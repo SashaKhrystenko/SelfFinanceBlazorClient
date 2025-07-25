@@ -1,0 +1,49 @@
+﻿@typeparam T
+
+<Pagination ActivePageNumber="CurrentPage" TotalPages="_totalPages" Alignment="Alignment.Center" PageChanged="OnPageChanged"/>
+
+@code {
+    private int _totalPages;
+
+    [Parameter]
+    public IEnumerable<T> ItemList { get; set; }
+
+    [Parameter]
+    public int AmountOfItemsOnPage { get; set; }
+
+    [Parameter]
+    public EventCallback OnPageChange { get; set; }
+
+    public int CurrentPage = 1;
+
+    protected override void OnInitialized()
+    {
+        _totalPages = CalculateTotalPages();
+    }
+
+    protected override void OnParametersSet()
+    {
+        _totalPages = CalculateTotalPages();
+    }
+
+    private int CalculateTotalPages()
+    {
+        int itemAmount = ItemList.Count();
+
+        if (itemAmount % 5 == 0)
+        {
+            return itemAmount / AmountOfItemsOnPage;
+        }
+        else
+        {
+            return itemAmount / AmountOfItemsOnPage + 1;
+        }
+    }
+
+    private void OnPageChanged(int newNumberPage)
+    {
+        CurrentPage = newNumberPage;
+
+        OnPageChange.InvokeAsync();
+    }
+}

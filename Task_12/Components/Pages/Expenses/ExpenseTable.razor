@@ -34,7 +34,7 @@
     private NavigationManager _navigationManager { get; set; }
 
     [Parameter]
-    public IReadOnlyList<ExpenseModel> Expenses { get; set; }
+    public IEnumerable<ExpenseModel> Expenses { get; set; }
 
     [Parameter]
     public EventCallback OnDeleteExpense { get; set; }

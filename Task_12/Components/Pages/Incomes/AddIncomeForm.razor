@@ -1,7 +1,4 @@
 ﻿<EditForm Model="@income" OnValidSubmit="AddIncome">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
     <div class="pb-1">
         <label>Category:</label>
         <InputSelect class="form-select" @bind-Value="income.Category">
@@ -18,9 +15,7 @@
         <InputNumber class="form-control no-spinner" @bind-Value="income.Amount" />
     </div>
 
-    <div class="pb-1">
-        <button class="btn btn-primary" type="submit">Add</button>
-    </div>
+    <button class="btn btn-primary pb-1" type="submit">Add</button>
 </EditForm>
 
 @code {
@@ -33,19 +28,31 @@
     [Parameter]
     public EventCallback OnIncomeAdded { get; set; }
 
+    [Parameter]
+    public EventCallback<string> OnInvalidDataInput { get; set; }
+
     IncomeModel income = new();
 
-    public async Task AddIncome() //TODO: зробити норм валідацію і попап для неї
+    public void AddIncome()
     {
-        if (income.Amount <= 0)
+        if (string.IsNullOrWhiteSpace(income.Category))
         {
+            OnInvalidDataInput.InvokeAsync("Category is empty.");
+
             return;
         }
 
-        await _client.AddIncomeAsync(income.Amount, income.Category);
+        if (income.Amount <= 0)
+        {
+            OnInvalidDataInput.InvokeAsync("Amount can't be less or equel zero.");
+
+            return;
+        }
+
+        _client.AddIncomeAsync(income.Amount, income.Category);
 
         income = new();
 
-        await OnIncomeAdded.InvokeAsync();
+        OnIncomeAdded.InvokeAsync();
     }
 }

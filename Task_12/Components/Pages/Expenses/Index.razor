@@ -7,9 +7,13 @@
 
 <ExpenseSortToolbar ExpenseSortOption="expenseSortOption" OnSelectbarChanges="UpdateExpenseListData" />
 
-<ExpenseTable Expenses="@_listItems" OnDeleteExpense="UpdateExpenseListData" />
+<ExpenseTable Expenses="_itemsOnPage" OnDeleteExpense="UpdateExpenseListData" />
 
-<AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="UpdateExpenseListData" />
+<Paginator @ref="_paginator" ItemList="_expenses" OnPageChange="ShowPageData" AmountOfItemsOnPage="_amountOfItemsOnList" />
+
+<AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="ShowSuccessPopupAndUpdateData" OnInvalidDataInput="ShowErrorPopup" />
+
+<Popup @ref="_popup"/>
 
 @code {
     private ExpenseSortOption expenseSortOption = new()
@@ -18,22 +22,50 @@
         ByDescending = true
     };
 
+    private Paginator<ExpenseModel> _paginator;
+    private Popup _popup;
+
     private IReadOnlyList<ExpenseModel> _expenses;
     private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
+    private IEnumerable<ExpenseModel> _itemsOnPage;
 
-    private IReadOnlyList<ExpenseModel> _listItems;
+    private int _amountOfItemsOnList = 5;
 
     [Inject]
     private Client _client { get; set; }
-
-    public void UpdateExpenseListData()
-    {
-        _expenses = _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending).Result;
-    }
 
     protected override void OnInitialized()
     {
         _expenses = _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending).Result;
         _expenseCategories = _client.GetSortedExpenseCategoriesAsync(ExpenseCategoryFilter.Name, byDescending: false).Result;
+
+        _itemsOnPage = _expenses.Take(_amountOfItemsOnList);
+    }
+
+    private void UpdateExpenseListData()
+    {
+        _expenses = _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending).Result;
+
+        ShowPageData();
+    }
+
+    private void ShowPageData()
+    {
+        _itemsOnPage = _expenses
+            .Skip((_paginator.CurrentPage - 1) * _amountOfItemsOnList)
+            .Take(_amountOfItemsOnList)
+        ;
+    }
+
+    private void ShowSuccessPopupAndUpdateData()
+    {
+        _popup.ShowSuccess("Expense was added.");
+
+        UpdateExpenseListData();
+    }
+
+    private void ShowErrorPopup(string message)
+    {
+        _popup.ShowError(message);
     }
 }

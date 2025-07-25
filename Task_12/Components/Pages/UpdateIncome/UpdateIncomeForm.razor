@@ -23,9 +23,7 @@
         <InputNumber class="form-control no-spinner" @bind-Value="Income.Amount">@Income.Amount</InputNumber>
     </div>
 
-    <div class="pb-1">
-        <button class="btn btn-primary w-100" type="submit">Update</button>
-    </div>
+    <button class="btn btn-primary w-100" type="submit">Update</button>
 </EditForm>
 
 
@@ -39,8 +37,37 @@
     [Parameter]
     public IReadOnlyList<IncomeCategoryModel> IncomeCategories { get; set; }
 
-    private void UpdateIncome() //TODO: Добавити валідацію
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnInvalidSubmit { get; set; }
+
+    private void UpdateIncome()
     {
+        if (Income.Date > DateOnly.FromDateTime(DateTime.Now))
+        {
+            OnInvalidSubmit.InvokeAsync("Date cannot be greater than today.");
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Income.Category))
+        {
+            OnInvalidSubmit.InvokeAsync("Category is empty.");
+
+            return;
+        }
+
+        if (Income.Amount <= 0)
+        {
+            OnInvalidSubmit.InvokeAsync("Amount can't be less or equel zero.");
+
+            return;
+        }
+
         _client.UpdateIncomeAsync(Income);
+
+        OnValidSubmit.InvokeAsync();
     }
 }

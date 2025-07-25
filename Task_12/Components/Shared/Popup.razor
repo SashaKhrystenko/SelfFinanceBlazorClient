@@ -1,33 +1,35 @@
 ﻿<Modal @ref="_modal" Size="ModalSize.Small">
-    <HeaderTemplate>Title</HeaderTemplate>
+    <HeaderTemplate>
+        @_title
+    </HeaderTemplate>
     <BodyTemplate>
-        <p>Message</p>
-        <Button Color="ButtonColor.Danger" @onclick="ClosePopup">Close</Button>
+        <p>@_message</p>
     </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Danger" @onclick="_modal.HideAsync">Close</Button>
+    </FooterTemplate>
 
 </Modal>
 
 @code {
     private Modal _modal;
 
-    [Parameter]
-    public string Title { get; set; }
+    private string _title;
+    private string _message;
 
-    [Parameter]
-    public string Message { get; set; }
-
-    [Parameter]
-    public EventCallback OnShown { get; set; }
-
-    public void ShowPopup()
+    public void ShowSuccess(string message)
     {
+        _title = "Success";
+        _message = message;
+
         _modal.ShowAsync();
-
-        StateHasChanged();
     }
-
-    private void ClosePopup()
+    
+    public void ShowError(string message)
     {
-        _modal.HideAsync();
+        _title = "Error";
+        _message = message;
+
+        _modal.ShowAsync();
     }
 }

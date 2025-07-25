@@ -14,10 +14,8 @@
         <label>Amount:</label>
         <InputNumber class="form-control no-spinner" @bind-Value="expense.Amount" />
     </div>
-
-    <div class="pb-1">
-        <button class="btn btn-primary" type="submit">Add</button>
-    </div>
+    
+    <button class="btn btn-primary pb-1" type="submit">Add</button>
 </EditForm>
 
 @code {
@@ -30,19 +28,31 @@
     [Parameter]
     public EventCallback OnExpenseAdded { get; set; }
 
+    [Parameter]
+    public EventCallback<string> OnInvalidDataInput { get; set; }
+
     private ExpenseModel expense = new();
 
-    public async Task AddExpense() //TODO: зробити норм валідацію і попап для неї
+    public void AddExpense()
     {
-        if (expense.Amount <= 0)
+        if (string.IsNullOrWhiteSpace(expense.Category))
         {
+            OnInvalidDataInput.InvokeAsync("Category is empty.");
+
             return;
         }
 
-        await _client.AddExpenseAsync(expense.Amount, expense.Category);
+        if (expense.Amount <= 0)
+        {
+            OnInvalidDataInput.InvokeAsync("Amount can't be less or equel zero.");
+
+            return;
+        }
+
+        _client.AddExpenseAsync(expense.Amount, expense.Category);
 
         expense = new();
 
-        await OnExpenseAdded.InvokeAsync();
+        OnExpenseAdded.InvokeAsync();
     }
 }

@@ -23,9 +23,7 @@
         <InputNumber class="form-control no-spinner" @bind-Value="Expense.Amount">@Expense.Amount</InputNumber>
     </div>
 
-    <div class="pb-1">
-        <button class="btn btn-primary w-100" type="submit">Update</button>
-    </div>
+    <button class="btn btn-primary w-100 pb-1" type="submit">Update</button>
 </EditForm>
 
 @code {
@@ -39,20 +37,36 @@
     public IReadOnlyList<ExpenseCategoryModel> ExpenseCategories { get; set; }
 
     [Parameter]
-    public EventCallback OnInvalidSubmit { get; set; }
+    public EventCallback<string> OnInvalidSubmit { get; set; }
 
     [Parameter]
     public EventCallback OnValidSubmit { get; set; }
 
-    private void UpdateExpanse() //TODO: Добавити валідацію
+    private void UpdateExpanse()
     {
+        if (Expense.Date > DateOnly.FromDateTime(DateTime.Now))
+        {
+            OnInvalidSubmit.InvokeAsync("Date cannot be greater than today.");
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Expense.Category))
+        {
+            OnInvalidSubmit.InvokeAsync("Category is empty.");
+
+            return;
+        }
+
         if (Expense.Amount <= 0)
         {
-            OnInvalidSubmit.InvokeAsync();
+            OnInvalidSubmit.InvokeAsync("Amount can't be less or equel zero.");
 
             return;
         }
 
         _client.UpdateExpenseAsync(Expense);
+
+        OnValidSubmit.InvokeAsync();
     }
 }
