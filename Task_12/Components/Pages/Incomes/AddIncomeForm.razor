@@ -26,33 +26,31 @@
     public IReadOnlyList<IncomeCategoryModel> incomeCategories { get; set; }
 
     [Parameter]
-    public EventCallback OnIncomeAdded { get; set; }
+    public EventCallback<IncomeModel> OnIncomeAdded { get; set; }
 
     [Parameter]
     public EventCallback<string> OnInvalidDataInput { get; set; }
 
     IncomeModel income = new();
 
-    public void AddIncome()
+    private async Task AddIncome()
     {
         if (string.IsNullOrWhiteSpace(income.Category))
         {
-            OnInvalidDataInput.InvokeAsync("Category is empty.");
+            await OnInvalidDataInput.InvokeAsync("Category is empty.");
 
             return;
         }
 
         if (income.Amount <= 0)
         {
-            OnInvalidDataInput.InvokeAsync("Amount can't be less or equel zero.");
+            await OnInvalidDataInput.InvokeAsync("Amount can't be less or equel zero.");
 
             return;
         }
 
-        _client.AddIncomeAsync(income.Amount, income.Category);
+        await OnIncomeAdded.InvokeAsync(income);
 
         income = new();
-
-        OnIncomeAdded.InvokeAsync();
     }
 }

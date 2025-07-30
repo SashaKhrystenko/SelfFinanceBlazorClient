@@ -1,0 +1,33 @@
+﻿<EditForm Model="_expenseCategory" OnSubmit="AddCategory">
+
+    <div class="my-2">
+        <label>Name:</label>
+        <TextInput Class="form-control" @bind-Value="_expenseCategory.Name" />
+    </div>
+
+    <Button Class="btn btn-primary my-2" Type="ButtonType.Submit">Add</Button>
+
+</EditForm>
+@code {
+    private ExpenseCategoryModel _expenseCategory = new();
+
+    [Parameter]
+    public EventCallback<ExpenseCategoryModel> OnValidDataSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnInvalidDataSubmit { get; set; }
+
+    private async Task AddCategory()
+    {
+        if (string.IsNullOrWhiteSpace(_expenseCategory.Name))
+        {
+            await OnInvalidDataSubmit.InvokeAsync("Name is null or white space.");
+
+            return;
+        }
+
+        await OnValidDataSubmit.InvokeAsync(_expenseCategory);
+
+        _expenseCategory = new();
+    }
+}

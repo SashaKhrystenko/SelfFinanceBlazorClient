@@ -5,17 +5,19 @@
 
 <h1>Incomes</h1>
 
-<IncomeSortToolbar IncomeSortOption="_incomeSortOption" OnSelectbarChanges="UpdateIncomeListData" />
+<IncomeSortToolbar IncomeSortOption="_incomeSortOption" OnSelectbarChanges="UpdateIncomeListDataAsync" />
 
-<IncomeTable Incomes="_itemsOnPage" OnDelete="@UpdateIncomeListData" />
+<IncomeTable Incomes="_itemsOnPage" OnDelete="@OnIncomeDeletedAsync" />
 
 <Paginator @ref="_paginator" ItemList="_incomes" AmountOfItemsOnPage="_amountOfItemsOnList" OnPageChange="ShowItemsOnPage" />
 
-<AddIncomeForm incomeCategories="@_incomeCategories" OnIncomeAdded="@ShowSuccessPopupAndUpdateData" OnInvalidDataInput="ShowErrorPopup" />
+<AddIncomeForm incomeCategories="@_incomeCategories" OnIncomeAdded="@OnAddingIncomeAsync" OnInvalidDataInput="ShowErrorPopup" />
 
 <Popup @ref="_popup" />
 
 @code {
+    private const int _amountOfItemsOnList = 5;
+
     private IncomeSortOption _incomeSortOption = new()
     {
         IncomeFilter = IncomeFilter.Date,
@@ -30,8 +32,6 @@
 
     private IEnumerable<IncomeModel> _itemsOnPage;
 
-    private int _amountOfItemsOnList = 5;
-
     [Inject]
     private Client _client { get; set; }
 
@@ -43,11 +43,29 @@
         _itemsOnPage = _incomes.Take(_amountOfItemsOnList);
     }
 
-    private void UpdateIncomeListData()
+    private async Task UpdateIncomeListDataAsync()
     {
-        _incomes = _client.GetSortedIncomesAsync(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending).Result;
+        _incomes = await _client.GetSortedIncomesAsync(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending);
 
         ShowItemsOnPage();
+    }
+
+    private async Task OnAddingIncomeAsync(IncomeModel income)
+    {
+        await _client.AddIncomeAsync(income.Amount, income.Category);
+
+        _popup.ShowSuccess("Income was added.");
+
+        await UpdateIncomeListDataAsync();
+    }
+
+    private async Task OnIncomeDeletedAsync(IncomeModel model)
+    {
+        await _client.DeleteIncomeAsync(model);
+
+        _popup.ShowSuccess("Income was deleted");
+
+        await UpdateIncomeListDataAsync();
     }
 
     private void ShowItemsOnPage()
@@ -56,13 +74,6 @@
             .Skip((_paginator.CurrentPage - 1) * _amountOfItemsOnList)
             .Take(_amountOfItemsOnList)
         ;
-    }
-
-    private void ShowSuccessPopupAndUpdateData()
-    {
-        _popup.ShowSuccess("Income was added.");
-
-        UpdateIncomeListData();
     }
 
     private void ShowErrorPopup(string message)

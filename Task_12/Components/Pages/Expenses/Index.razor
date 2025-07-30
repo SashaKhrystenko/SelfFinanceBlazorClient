@@ -7,11 +7,11 @@
 
 <ExpenseSortToolbar ExpenseSortOption="expenseSortOption" OnSelectbarChanges="UpdateExpenseListData" />
 
-<ExpenseTable Expenses="_itemsOnPage" OnDeleteExpense="UpdateExpenseListData" />
+<ExpenseTable Expenses="_itemsOnPage" OnDeleteExpense="OnExpenseDeleteAsync" />
 
 <Paginator @ref="_paginator" ItemList="_expenses" OnPageChange="ShowPageData" AmountOfItemsOnPage="_amountOfItemsOnList" />
 
-<AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="ShowSuccessPopupAndUpdateData" OnInvalidDataInput="ShowErrorPopup" />
+<AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="OnSuccessExpenseAddingAsync" OnInvalidDataInput="ShowErrorPopup" />
 
 <Popup @ref="_popup"/>
 
@@ -42,11 +42,13 @@
         _itemsOnPage = _expenses.Take(_amountOfItemsOnList);
     }
 
-    private void UpdateExpenseListData()
+    private async Task UpdateExpenseListData()
     {
-        _expenses = _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending).Result;
+        _expenses = await _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending);
 
         ShowPageData();
+
+        StateHasChanged();
     }
 
     private void ShowPageData()
@@ -57,11 +59,22 @@
         ;
     }
 
-    private void ShowSuccessPopupAndUpdateData()
+    private async Task OnSuccessExpenseAddingAsync(ExpenseModel expense)
     {
+        await _client.AddExpenseAsync(expense.Amount, expense.Category);
+
         _popup.ShowSuccess("Expense was added.");
 
-        UpdateExpenseListData();
+        await UpdateExpenseListData();
+    }
+
+    private async Task OnExpenseDeleteAsync(ExpenseModel expense)
+    {
+        await _client.DeleteExpenseAsync(expense);
+
+        _popup.ShowSuccess("Expense was deleted.");
+
+        await UpdateExpenseListData();
     }
 
     private void ShowErrorPopup(string message)

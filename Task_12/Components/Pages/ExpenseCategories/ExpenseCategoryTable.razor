@@ -1,0 +1,74 @@
+﻿<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>Name</td>
+            <td>Update</td>
+            <td>Delete</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (ExpenseCategoryModel category in _categoriesOnList)
+        {
+            <tr>
+                <td>@category.Name</td>
+                <td>
+                    <Button Class="btn btn-primary" @onclick="() => NavigateToUpdateExpenseCategoryPage(category.Id)">Update</Button>
+                </td>
+                <td>
+                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDeletedAsync(category)">Delete</Button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<Paginator @ref="_paginator" ItemList="ExpenseCategories" AmountOfItemsOnPage="_amountCategoriesOnList" OnPageChange="ShowPageData" />
+
+@code {
+    private const int _amountCategoriesOnList = 5;
+
+    private Paginator<ExpenseCategoryModel> _paginator;
+    private IEnumerable<ExpenseCategoryModel> _categoriesOnList;
+
+    [Inject]
+    private NavigationManager _navigationManager { get; set; }
+
+    [Parameter]
+    public IEnumerable<ExpenseCategoryModel> ExpenseCategories { get; set; }
+
+    [Parameter]
+    public EventCallback<ExpenseCategoryModel> OnCategoryDelete { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _categoriesOnList = ExpenseCategories.Take(_amountCategoriesOnList);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_paginator != null)
+        {
+            ShowPageData();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnCategoryDeletedAsync(ExpenseCategoryModel category)
+    {
+        await OnCategoryDelete.InvokeAsync(category);
+    }
+
+    private void NavigateToUpdateExpenseCategoryPage(Guid id)
+    {
+        _navigationManager.NavigateTo($"/expense-categories/update-expense-category/{id}");
+    }
+
+    private void ShowPageData()
+    {
+        _categoriesOnList = ExpenseCategories
+            .Skip((_paginator.CurrentPage - 1) * _amountCategoriesOnList)
+            .Take(_amountCategoriesOnList)
+        ;
+    }
+}

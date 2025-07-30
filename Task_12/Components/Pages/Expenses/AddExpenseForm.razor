@@ -19,40 +19,35 @@
 </EditForm>
 
 @code {
-    [Inject]
-    private Client _client { get; set; }
+    private ExpenseModel expense = new();
 
     [Parameter]
     public IReadOnlyList<ExpenseCategoryModel> ExpenseCategories { get; set; }
 
     [Parameter]
-    public EventCallback OnExpenseAdded { get; set; }
+    public EventCallback<ExpenseModel> OnExpenseAdded { get; set; }
 
     [Parameter]
     public EventCallback<string> OnInvalidDataInput { get; set; }
 
-    private ExpenseModel expense = new();
-
-    public void AddExpense()
+    public async Task AddExpense()
     {
         if (string.IsNullOrWhiteSpace(expense.Category))
         {
-            OnInvalidDataInput.InvokeAsync("Category is empty.");
+            await OnInvalidDataInput.InvokeAsync("Category is empty.");
 
             return;
         }
 
         if (expense.Amount <= 0)
         {
-            OnInvalidDataInput.InvokeAsync("Amount can't be less or equel zero.");
+            await OnInvalidDataInput.InvokeAsync("Amount can't be less or equel zero.");
 
             return;
         }
 
-        _client.AddExpenseAsync(expense.Amount, expense.Category);
+        await OnExpenseAdded.InvokeAsync(expense);
 
         expense = new();
-
-        OnExpenseAdded.InvokeAsync();
     }
 }

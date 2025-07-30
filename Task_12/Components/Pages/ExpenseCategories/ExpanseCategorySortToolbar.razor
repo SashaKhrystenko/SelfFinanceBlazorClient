@@ -1,0 +1,28 @@
+﻿<div class="d-flex justify-content-end align-items-center">
+    <label class="me-2">Sorting:</label>
+
+    <Button Class="btn" @onclick="OnSortOrderButtonClicked">
+        @if (SortOption.ByDescending)
+        {
+            <i class="bi bi-sort-down"></i>
+        }
+        else
+        {
+            <i class="bi bi-sort-up"></i>
+        }
+    </Button>
+</div>
+@code {
+    [Parameter]
+    public ExpenseCategorySortOption SortOption { get; set; }
+
+    [Parameter]
+    public EventCallback OnSortToolbarChanged { get; set; }
+
+    private void OnSortOrderButtonClicked()
+    {
+        SortOption.ByDescending = !SortOption.ByDescending;
+
+        OnSortToolbarChanged.InvokeAsync();
+    }
+}

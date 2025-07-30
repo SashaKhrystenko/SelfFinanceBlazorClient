@@ -31,8 +31,7 @@
 
 @code 
 {
-    [Inject] //TODO: Зробити оновлення доходу
-    private Client _client { get; set; }
+    //TODO: Зробити оновлення доходу
 
     [Inject]
     private NavigationManager _navigationManager { get; set; }
@@ -41,13 +40,11 @@
     public IEnumerable<IncomeModel> Incomes { get; set; }
 
     [Parameter]
-    public EventCallback OnDelete { get; set; }
+    public EventCallback<IncomeModel> OnDelete { get; set; }
 
     public async Task DeleteIncomeAsync(IncomeModel model)
     {
-        await _client.DeleteIncomeAsync(model);
-
-        await OnDelete.InvokeAsync();
+        await OnDelete.InvokeAsync(model);
     }
 
     public void NavigateToUpdateInconePage(Guid id)

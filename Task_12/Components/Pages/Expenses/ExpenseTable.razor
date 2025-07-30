@@ -28,22 +28,17 @@
 
 @code {
     [Inject]
-    private Client _client { get; set; }
-
-    [Inject]
     private NavigationManager _navigationManager { get; set; }
 
     [Parameter]
     public IEnumerable<ExpenseModel> Expenses { get; set; }
 
     [Parameter]
-    public EventCallback OnDeleteExpense { get; set; }
+    public EventCallback<ExpenseModel> OnDeleteExpense { get; set; }
 
     private async Task DeleteExpenseAsync(ExpenseModel expense)
     {
-        await _client.DeleteExpenseAsync(expense);
-
-        await OnDeleteExpense.InvokeAsync();
+        await OnDeleteExpense.InvokeAsync(expense);
     }
 
     private void NavigateToUpdateExpensePage(Guid id)
