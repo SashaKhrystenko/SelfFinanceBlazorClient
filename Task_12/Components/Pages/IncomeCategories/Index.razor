@@ -1,0 +1,62 @@
+﻿@page "/income-categories"
+@rendermode InteractiveServer
+
+<PageTitle>Income categories</PageTitle>
+
+<h1>Income categories</h1>
+
+<IncomeCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
+
+<IncomeCategoryTable IncomeCategories="_incomeCategories" OnCategoryDelete="OnCategoryDeletedAsync" />
+
+<AddIncomeCategoryForm OnValidDataSubmit="OnCategoryAddedAsync" OnInvalidDataSubmit="ShowErrorPopup" />
+
+<Popup @ref="_popup" />
+
+@code {
+    private IncomeCategorySortOption _sortOption = new()
+    {
+        IncomeCategoryFilter = IncomeCategoryFilter.Name,
+        ByDescending = false
+    };
+
+    private Popup _popup;
+
+    private IReadOnlyList<IncomeCategoryModel> _incomeCategories;
+
+    [Inject]
+    private Client _client { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _incomeCategories = _client.GetSortedIncomeCategoriesAsync(_sortOption.IncomeCategoryFilter, _sortOption.ByDescending).Result;
+    }
+
+    private async Task OnCategoryAddedAsync(IncomeCategoryModel category)
+    {
+        await _client.AddIncomeCategoryAsync(category.Name);
+
+        _popup.ShowSuccess("Category was added.");
+
+        await UpdateListDataAsync();
+    }
+
+    private async Task OnCategoryDeletedAsync(IncomeCategoryModel category)
+    {
+        await _client.DeleteIncomeCategoryAsync(category);
+
+        _popup.ShowError("Category was deleted.");
+
+        await UpdateListDataAsync();
+    }
+
+    private async Task UpdateListDataAsync()
+    {
+        _incomeCategories = await _client.GetSortedIncomeCategoriesAsync(_sortOption.IncomeCategoryFilter, _sortOption.ByDescending);
+    }
+
+    private void ShowErrorPopup(string message)
+    {
+        _popup.ShowError(message);
+    }
+}

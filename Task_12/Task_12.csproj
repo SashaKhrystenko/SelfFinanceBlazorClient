@@ -20,8 +20,4 @@
     <PackageReference Include="NSwag.Core" Version="14.4.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\Pages\IncomeCategories\" />
-  </ItemGroup>
-
 </Project>
