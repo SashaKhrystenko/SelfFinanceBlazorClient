@@ -7,9 +7,11 @@
 
 <IncomeCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
 
-<IncomeCategoryTable IncomeCategories="_incomeCategories" OnCategoryDelete="OnCategoryDeletedAsync" />
+<IncomeCategoryTable IncomeCategories="_incomeCategories" OnCategoryDelete="OnCategoryDeletedAsync" OnUpdate="ShowUpdateIncomeCategoryModal" />
 
 <AddIncomeCategoryForm OnValidDataSubmit="OnCategoryAddedAsync" OnInvalidDataSubmit="ShowErrorPopup" />
+
+<UpdateIncomeCategoryModal @ref="_updateIncomeCategoryModal" OnValidSubmit="OnIncomeUpdate" OnInvalidSubmit="ShowErrorPopup" />
 
 <Popup @ref="_popup" />
 
@@ -21,6 +23,7 @@
     };
 
     private Popup _popup;
+    private UpdateIncomeCategoryModal _updateIncomeCategoryModal;
 
     private IReadOnlyList<IncomeCategoryModel> _incomeCategories;
 
@@ -53,6 +56,20 @@
     private async Task UpdateListDataAsync()
     {
         _incomeCategories = await _client.GetSortedIncomeCategoriesAsync(_sortOption.IncomeCategoryFilter, _sortOption.ByDescending);
+    }
+
+    private async Task OnIncomeUpdate(IncomeCategoryModel editingCategory)
+    {
+        await _client.UpdateIncomeCategoryAsync(editingCategory);
+
+        _popup.ShowError("Category was Updated.");
+
+        await UpdateListDataAsync();
+    }
+
+    private void ShowUpdateIncomeCategoryModal(IncomeCategoryModel editingCategory)
+    {
+        _updateIncomeCategoryModal.ShowModal(editingCategory);
     }
 
     private void ShowErrorPopup(string message)

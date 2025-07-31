@@ -7,9 +7,11 @@
 
 <ExpanseCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
 
-<ExpenseCategoryTable ExpenseCategories="_expenseCategories" OnCategoryDelete="OnCategoryDeletedAsync" />
+<ExpenseCategoryTable ExpenseCategories="_expenseCategories" OnCategoryDelete="OnCategoryDeletedAsync" OnUpdate="ShowUpdateExpenseCategoryModal" />
 
 <AddExpenseCategoryForm OnValidDataSubmit="OnCategoryAddedAsync" OnInvalidDataSubmit="ShowErrorPopup" />
+
+<UpdateExpenseCategoryModal @ref="_updateExpenseCategoryModal" OnValidSubmit="OnExpenseCategoryUpdate" OnInvalidSubmit="ShowErrorPopup" />
 
 <Popup @ref="_popup" />
 
@@ -21,6 +23,7 @@
     };
 
     private Popup _popup;
+    private UpdateExpenseCategoryModal _updateExpenseCategoryModal;
 
     private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
 
@@ -53,6 +56,20 @@
     private async Task UpdateListDataAsync()
     {
         _expenseCategories = await _client.GetSortedExpenseCategoriesAsync(_sortOption.ExpenseCategoryFilter, _sortOption.ByDescending);
+    }
+
+    private async Task OnExpenseCategoryUpdate(ExpenseCategoryModel expenseCategory)
+    {
+        await _client.UpdateExpenseCategoryAsync(expenseCategory);
+
+        _popup.ShowSuccess("category was updated.");
+
+        await UpdateListDataAsync();
+    }
+
+    private void ShowUpdateExpenseCategoryModal(ExpenseCategoryModel expenseCategory)
+    {
+        _updateExpenseCategoryModal.ShowModal(expenseCategory);
     }
 
     private void ShowErrorPopup(string message)

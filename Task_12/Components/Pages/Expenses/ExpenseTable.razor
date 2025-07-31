@@ -16,7 +16,7 @@
                 <td>@expense?.Category</td>
                 <td>@expense.Amount</td>
                 <td>
-                    <button class="btn btn-primary" @onclick="() => NavigateToUpdateExpensePage(expense.Id)">Update</button>
+                    <button class="btn btn-primary" @onclick="() => OnUpdateButtonPressed.InvokeAsync(expense)">Update</button>
                 </td>
                 <td>
                     <button class="btn btn-primary" @onclick="() => DeleteExpenseAsync(expense)">Delete</button>
@@ -27,22 +27,17 @@
 </table>
 
 @code {
-    [Inject]
-    private NavigationManager _navigationManager { get; set; }
-
     [Parameter]
     public IEnumerable<ExpenseModel> Expenses { get; set; }
 
     [Parameter]
     public EventCallback<ExpenseModel> OnDeleteExpense { get; set; }
 
+    [Parameter]
+    public EventCallback<ExpenseModel> OnUpdateButtonPressed { get; set; }
+
     private async Task DeleteExpenseAsync(ExpenseModel expense)
     {
         await OnDeleteExpense.InvokeAsync(expense);
-    }
-
-    private void NavigateToUpdateExpensePage(Guid id)
-    {
-        _navigationManager.NavigateTo($"/expenses/update-expense/{id}");
     }
 }

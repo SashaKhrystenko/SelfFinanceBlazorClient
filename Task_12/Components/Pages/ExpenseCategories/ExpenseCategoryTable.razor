@@ -12,7 +12,7 @@
             <tr>
                 <td>@category.Name</td>
                 <td>
-                    <Button Class="btn btn-primary" @onclick="() => NavigateToUpdateExpenseCategoryPage(category.Id)">Update</Button>
+                    <Button Class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(category)">Update</Button>
                 </td>
                 <td>
                     <Button Class="btn btn-primary" @onclick="() => OnCategoryDeletedAsync(category)">Delete</Button>
@@ -30,11 +30,11 @@
     private Paginator<ExpenseCategoryModel> _paginator;
     private IEnumerable<ExpenseCategoryModel> _categoriesOnList;
 
-    [Inject]
-    private NavigationManager _navigationManager { get; set; }
-
     [Parameter]
     public IEnumerable<ExpenseCategoryModel> ExpenseCategories { get; set; }
+
+    [Parameter]
+    public EventCallback<ExpenseCategoryModel> OnUpdate { get; set; }
 
     [Parameter]
     public EventCallback<ExpenseCategoryModel> OnCategoryDelete { get; set; }
@@ -57,11 +57,6 @@
     private async Task OnCategoryDeletedAsync(ExpenseCategoryModel category)
     {
         await OnCategoryDelete.InvokeAsync(category);
-    }
-
-    private void NavigateToUpdateExpenseCategoryPage(Guid id)
-    {
-        _navigationManager.NavigateTo($"/expense-categories/update-expense-category/{id}");
     }
 
     private void ShowPageData()

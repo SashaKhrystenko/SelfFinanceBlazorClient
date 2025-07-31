@@ -7,11 +7,13 @@
 
 <ExpenseSortToolbar ExpenseSortOption="expenseSortOption" OnSelectbarChanges="UpdateExpenseListData" />
 
-<ExpenseTable Expenses="_itemsOnPage" OnDeleteExpense="OnExpenseDeleteAsync" />
+<ExpenseTable Expenses="_itemsOnPage" OnDeleteExpense="OnExpenseDeleteAsync" OnUpdateButtonPressed="ShowUpdateExpenseModal" />
 
 <Paginator @ref="_paginator" ItemList="_expenses" OnPageChange="ShowPageData" AmountOfItemsOnPage="_amountOfItemsOnList" />
 
 <AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="OnSuccessExpenseAddingAsync" OnInvalidDataInput="ShowErrorPopup" />
+
+<UpdateExpenseModal @ref="_updateExpenseModal" ExpenseCategories="_expenseCategories" OnInvalidSubmit="ShowErrorPopup" OnValidSubmit="UpdateExpense" />
 
 <Popup @ref="_popup"/>
 
@@ -23,6 +25,7 @@
     };
 
     private Paginator<ExpenseModel> _paginator;
+    private UpdateExpenseModal _updateExpenseModal;
     private Popup _popup;
 
     private IReadOnlyList<ExpenseModel> _expenses;
@@ -59,6 +62,15 @@
         ;
     }
 
+    private async Task UpdateExpense(ExpenseModel expense)
+    {
+        await _client.UpdateExpenseAsync(expense);
+
+        _popup.ShowSuccess("Expense was updated.");
+
+        await UpdateExpenseListData();
+    }
+
     private async Task OnSuccessExpenseAddingAsync(ExpenseModel expense)
     {
         await _client.AddExpenseAsync(expense.Amount, expense.Category);
@@ -80,5 +92,10 @@
     private void ShowErrorPopup(string message)
     {
         _popup.ShowError(message);
+    }
+
+    private void ShowUpdateExpenseModal(ExpenseModel expense)
+    {
+        _updateExpenseModal.ShowModal(expense);
     }
 }

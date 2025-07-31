@@ -1,0 +1,76 @@
+﻿<Modal @ref="_modal" Title="Update income">
+    <BodyTemplate>
+        <EditForm Model="@_editingIncome" OnSubmit="UpdateIncomeAsync">
+
+            <div class="pb-1">
+                <label>Date:</label>
+                <InputDate class="form-control" @bind-Value="_editingIncome.Date" />
+            </div>
+
+            <div class="pb-1">
+                <label>Category:</label>
+                <InputSelect class="form-select" @bind-Value="_editingIncome.Category">
+                    <option value="" disabled selected hidden></option>
+                    @foreach (IncomeCategoryModel expanseCategory in IncomeCategories)
+                    {
+                        <option value="@expanseCategory.Name">@expanseCategory.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="pb-1">
+                <label>Amount:</label>
+                <InputNumber class="form-control no-spinner" @bind-Value="_editingIncome.Amount">@_editingIncome.Amount</InputNumber>
+            </div>
+
+            <button class="btn btn-primary w-100 pb-1" type="submit">Update</button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+@code {
+    private Modal _modal;
+    private IncomeModel _editingIncome;
+
+    [Parameter]
+    public IEnumerable<IncomeCategoryModel> IncomeCategories { get; set; }
+
+    [Parameter]
+    public EventCallback<IncomeModel> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnInvalidSubmit { get; set; }
+
+    public async Task ShowModal(IncomeModel editingIncome)
+    {
+        _editingIncome = editingIncome;
+
+        await _modal.ShowAsync();
+    }
+
+    private async Task UpdateIncomeAsync()
+    {
+        if (_editingIncome.Date > DateOnly.FromDateTime(DateTime.Now))
+        {
+            await OnInvalidSubmit.InvokeAsync("Date cannot be greater than today.");
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editingIncome.Category))
+        {
+            await OnInvalidSubmit.InvokeAsync("Category is empty.");
+
+            return;
+        }
+
+        if (_editingIncome.Amount <= 0)
+        {
+            await OnInvalidSubmit.InvokeAsync("Amount can't be less or equel zero.");
+
+            return;
+        }
+
+        await OnValidSubmit.InvokeAsync(_editingIncome);
+    }
+}

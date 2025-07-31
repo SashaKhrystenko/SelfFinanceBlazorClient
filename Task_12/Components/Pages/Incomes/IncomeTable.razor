@@ -19,10 +19,10 @@
                 <td>@income?.Category</td>
                 <td>@income.Amount</td>
                 <td>
-                    <button class="btn btn-primary" @onclick="() => NavigateToUpdateInconePage(income.Id)">Update</button>
+                    <button class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(income)">Update</button>
                 </td>
                 <td>
-                    <button class="btn btn-primary" @onclick="() => DeleteIncomeAsync(income)">Delete</button>
+                    <button class="btn btn-primary" @onclick="() => OnDelete.InvokeAsync(income)">Delete</button>
                 </td>
             </tr>
         }
@@ -31,24 +31,12 @@
 
 @code 
 {
-    //TODO: Зробити оновлення доходу
-
-    [Inject]
-    private NavigationManager _navigationManager { get; set; }
-
     [Parameter]
     public IEnumerable<IncomeModel> Incomes { get; set; }
 
     [Parameter]
     public EventCallback<IncomeModel> OnDelete { get; set; }
 
-    public async Task DeleteIncomeAsync(IncomeModel model)
-    {
-        await OnDelete.InvokeAsync(model);
-    }
-
-    public void NavigateToUpdateInconePage(Guid id)
-    {
-        _navigationManager.NavigateTo($"/incomes/update-income/{id}");
-    }
+    [Parameter]
+    public EventCallback<IncomeModel> OnUpdate { get; set; }
 }

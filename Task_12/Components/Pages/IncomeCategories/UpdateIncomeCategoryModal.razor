@@ -1,0 +1,43 @@
+﻿<Modal @ref="_modal" Title="Update income category">
+    <BodyTemplate>
+        <EditForm Model="@_editingIncomeCategory" OnSubmit="UpdateExpenseCategoryAsync">
+
+            <div class="pb-1">
+                <label>Name:</label>
+                <InputText class="form-control" @bind-Value="_editingIncomeCategory.Name" />
+            </div>
+
+            <button class="btn btn-primary w-100 pb-1" type="submit">Update</button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+@code {
+    private Modal _modal;
+    private IncomeCategoryModel _editingIncomeCategory;
+
+    [Parameter]
+    public EventCallback<IncomeCategoryModel> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnInvalidSubmit { get; set; }
+
+    public void ShowModal(IncomeCategoryModel editingIncomeCategory)
+    {
+        _editingIncomeCategory = editingIncomeCategory;
+
+        _modal.ShowAsync();
+    }
+
+    private async Task UpdateExpenseCategoryAsync()
+    {
+        if (string.IsNullOrEmpty(_editingIncomeCategory.Name))
+        {
+            await OnInvalidSubmit.InvokeAsync("Name is empty.");
+
+            return;
+        }
+
+        await OnValidSubmit.InvokeAsync(_editingIncomeCategory);
+    }
+}

@@ -12,10 +12,10 @@
             <tr>
                 <td>@category.Name</td>
                 <td>
-                    <Button Class="btn btn-primary" @onclick="() => NavigateToUpdateIncomeCategoryPage(category.Id)">Update</Button>
+                    <Button Class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(category)">Update</Button>
                 </td>
                 <td>
-                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDeletedAsync(category)">Delete</Button>
+                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDelete.InvokeAsync(category)">Delete</Button>
                 </td>
             </tr>
         }
@@ -30,14 +30,14 @@
     private Paginator<IncomeCategoryModel> _paginator;
     private IEnumerable<IncomeCategoryModel> _categoriesOnList;
 
-    [Inject]
-    private NavigationManager _navigationManager { get; set; }
-
     [Parameter]
     public IEnumerable<IncomeCategoryModel> IncomeCategories { get; set; }
 
     [Parameter]
     public EventCallback<IncomeCategoryModel> OnCategoryDelete { get; set; }
+
+    [Parameter]
+    public EventCallback<IncomeCategoryModel> OnUpdate { get; set; }
 
     protected override void OnInitialized()
     {
@@ -52,16 +52,6 @@
         }
 
         StateHasChanged();
-    }
-
-    private async Task OnCategoryDeletedAsync(IncomeCategoryModel category)
-    {
-        await OnCategoryDelete.InvokeAsync(category);
-    }
-
-    private void NavigateToUpdateIncomeCategoryPage(Guid id)
-    {
-        _navigationManager.NavigateTo($"/income-categories/update-income-category/{id}");
     }
 
     private void ShowPageData()
