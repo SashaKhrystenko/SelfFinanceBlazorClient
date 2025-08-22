@@ -25,44 +25,50 @@
     private Popup _popup;
     private UpdateExpenseCategoryModal _updateExpenseCategoryModal;
 
-    private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
+    private IEnumerable<ExpenseCategoryModel> _expenseCategories;
 
     [Inject]
-    private Client _client { get; set; }
+    private INetworkProvider _networkProvider { get; set; }
 
     protected override void OnInitialized()
     {
-        _expenseCategories = _client.GetSortedExpenseCategoriesAsync(_sortOption.ExpenseCategoryFilter, _sortOption.ByDescending).Result;
+        _expenseCategories = _networkProvider.Get<IEnumerable<ExpenseCategoryModel>>(
+            SelfFinanceApiRoutes.ExpenseCategoryController.MakeGetSortedExpenseCategoriesRoute(_sortOption.ExpenseCategoryFilter, _sortOption.ByDescending)
+        ).ResponseData;
     }
 
-    private async Task OnCategoryAddedAsync(ExpenseCategoryModel category)
+    private async Task OnCategoryAddedAsync(HttpContent httpContent)
     {
-        await _client.AddExpenseCategoryAsync(category.Name);
+        RequestResult requestResult = await _networkProvider.PostAsync(SelfFinanceApiRoutes.ExpenseCategoryController.AddExpenseCategory, httpContent);
 
-        _popup.ShowSuccess("Category was added.");
+        ShowPopupByResult(requestResult);
 
         await UpdateListDataAsync();
     }
 
-    private async Task OnCategoryDeletedAsync(ExpenseCategoryModel category)
+    private async Task OnCategoryDeletedAsync(Guid id)
     {
-        await _client.DeleteExpenseCategoryAsync(category);
+        RequestResult requestResult = await _networkProvider.DeleteAsync(SelfFinanceApiRoutes.ExpenseCategoryController.MakeDeleteExpenseCategorydRoute(id));
 
-        _popup.ShowError("Category was deleted.");
+        ShowPopupByResult(requestResult);
 
         await UpdateListDataAsync();
     }
 
     private async Task UpdateListDataAsync()
     {
-        _expenseCategories = await _client.GetSortedExpenseCategoriesAsync(_sortOption.ExpenseCategoryFilter, _sortOption.ByDescending);
+        RequestResult<IEnumerable<ExpenseCategoryModel>> requestResult = await _networkProvider.GetAsync<IEnumerable<ExpenseCategoryModel>>(
+            SelfFinanceApiRoutes.ExpenseCategoryController.MakeGetSortedExpenseCategoriesRoute(_sortOption.ExpenseCategoryFilter, _sortOption.ByDescending)
+        );
+
+        _expenseCategories = requestResult.ResponseData;
     }
 
     private async Task OnExpenseCategoryUpdate(ExpenseCategoryModel expenseCategory)
     {
-        await _client.UpdateExpenseCategoryAsync(expenseCategory);
+        RequestResult requestResult = await _networkProvider.PatchAsync(SelfFinanceApiRoutes.ExpenseCategoryController.UpdateExpenseCategory, expenseCategory);
 
-        _popup.ShowSuccess("category was updated.");
+        ShowPopupByResult(requestResult);
 
         await UpdateListDataAsync();
     }
@@ -75,5 +81,17 @@
     private void ShowErrorPopup(string message)
     {
         _popup.ShowError(message);
+    }
+
+    private void ShowPopupByResult(RequestResult requestResult)
+    {
+        if (requestResult.IsSuccess)
+        {
+            _popup.ShowSuccess(requestResult.Message);
+        }
+        else
+        {
+            _popup.ShowError(requestResult.Message);
+        }
     }
 }

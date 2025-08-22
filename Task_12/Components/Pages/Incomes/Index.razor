@@ -30,52 +30,61 @@
     private UpdateIncomeModal _updateIncomeModal;
     private Popup _popup;
 
-    private IReadOnlyList<IncomeModel> _incomes;
-    private IReadOnlyList<IncomeCategoryModel> _incomeCategories;
+    private IEnumerable<IncomeModel> _incomes;
+    private IEnumerable<IncomeCategoryModel> _incomeCategories;
 
     private IEnumerable<IncomeModel> _itemsOnPage;
 
     [Inject]
-    private Client _client { get; set; }
+    private INetworkProvider _networkProvider { get; set; }
 
     protected override void OnInitialized()
     {
-        _incomes = _client.GetSortedIncomesAsync(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending).Result;
-        _incomeCategories = _client.GetSortedIncomeCategoriesAsync(IncomeCategoryFilter.Name, byDescending: false).Result;
+        _incomes = _networkProvider.Get<IEnumerable<IncomeModel>>(
+            SelfFinanceApiRoutes.IncomeController.MakeGetSortedIncomeRoute(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending)
+        ).ResponseData;
+
+        _incomeCategories = _networkProvider.Get<IEnumerable<IncomeCategoryModel>>(
+            SelfFinanceApiRoutes.IncomeCategoryController.MakeGetSortedIncomeCategoriesRoute(IncomeCategoryFilter.Name, byDescending: false)
+        ).ResponseData;
 
         _itemsOnPage = _incomes.Take(_amountOfItemsOnList);
     }
 
     private async Task UpdateIncomeListDataAsync()
     {
-        _incomes = await _client.GetSortedIncomesAsync(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending);
+        RequestResult<IEnumerable<IncomeModel>> requestResult = await _networkProvider.GetAsync<IEnumerable<IncomeModel>>(
+            SelfFinanceApiRoutes.IncomeController.MakeGetSortedIncomeRoute(_incomeSortOption.IncomeFilter, _incomeSortOption.ByDescending)
+        );
+
+        _incomes = requestResult.ResponseData;
 
         ShowItemsOnPage();
     }
 
-    private async Task OnAddingIncomeAsync(IncomeModel income)
+    private async Task OnAddingIncomeAsync(HttpContent formData)
     {
-        await _client.AddIncomeAsync(income.Amount, income.Category);
+        RequestResult requestResult = await _networkProvider.PostAsync(SelfFinanceApiRoutes.IncomeController.AddIncome, formData);
 
-        _popup.ShowSuccess("Income was added.");
+        ShowPopupByResult(requestResult);
 
         await UpdateIncomeListDataAsync();
     }
 
-    private async Task OnIncomeDeletedAsync(IncomeModel model)
+    private async Task OnIncomeDeletedAsync(Guid id)
     {
-        await _client.DeleteIncomeAsync(model);
+        RequestResult requestResult = await _networkProvider.DeleteAsync(SelfFinanceApiRoutes.IncomeController.MakeDeleteIncomeRoute(id));
 
-        _popup.ShowSuccess("Income was deleted");
+        ShowPopupByResult(requestResult);
 
         await UpdateIncomeListDataAsync();
     }
 
     private async Task OnUpdateIncome(IncomeModel income)
     {
-        await _client.UpdateIncomeAsync(income);
+        RequestResult requestResult = await _networkProvider.PatchAsync(SelfFinanceApiRoutes.IncomeController.UpdateIncome, income);
 
-        _popup.ShowSuccess("Income was updated.");
+        ShowPopupByResult(requestResult);
 
         await UpdateIncomeListDataAsync();
     }
@@ -96,5 +105,17 @@
     private void ShowErrorPopup(string message)
     {
         _popup.ShowError(message);
+    }
+
+    private void ShowPopupByResult(RequestResult requestResult)
+    {
+        if (requestResult.IsSuccess)
+        {
+            _popup.ShowSuccess(requestResult.Message);
+        }
+        else
+        {
+            _popup.ShowError(requestResult.Message);
+        }
     }
 }

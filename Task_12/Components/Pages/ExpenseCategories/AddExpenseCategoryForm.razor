@@ -12,7 +12,7 @@
     private ExpenseCategoryModel _expenseCategory = new();
 
     [Parameter]
-    public EventCallback<ExpenseCategoryModel> OnValidDataSubmit { get; set; }
+    public EventCallback<HttpContent> OnValidDataSubmit { get; set; }
 
     [Parameter]
     public EventCallback<string> OnInvalidDataSubmit { get; set; }
@@ -26,7 +26,12 @@
             return;
         }
 
-        await OnValidDataSubmit.InvokeAsync(_expenseCategory);
+        MultipartFormDataContent formData = new()
+        {
+            { new StringContent(_expenseCategory.Name), "name"}
+        };
+
+        await OnValidDataSubmit.InvokeAsync(formData);
 
         _expenseCategory = new();
     }

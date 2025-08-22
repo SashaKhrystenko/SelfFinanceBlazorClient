@@ -14,7 +14,7 @@
         <label>Amount:</label>
         <InputNumber class="form-control no-spinner" @bind-Value="expense.Amount" />
     </div>
-    
+
     <button class="btn btn-primary pb-1" type="submit">Add</button>
 </EditForm>
 
@@ -22,10 +22,10 @@
     private ExpenseModel expense = new();
 
     [Parameter]
-    public IReadOnlyList<ExpenseCategoryModel> ExpenseCategories { get; set; }
+    public IEnumerable<ExpenseCategoryModel> ExpenseCategories { get; set; }
 
     [Parameter]
-    public EventCallback<ExpenseModel> OnExpenseAdded { get; set; }
+    public EventCallback<HttpContent> OnExpenseAdded { get; set; }
 
     [Parameter]
     public EventCallback<string> OnInvalidDataInput { get; set; }
@@ -46,7 +46,13 @@
             return;
         }
 
-        await OnExpenseAdded.InvokeAsync(expense);
+        MultipartFormDataContent formDataContent = new()
+        {
+            { new StringContent(expense.Category), "category" },
+            { new StringContent(expense.Amount.ToString()), "amount" }
+        };
+
+        await OnExpenseAdded.InvokeAsync(formDataContent);
 
         expense = new();
     }

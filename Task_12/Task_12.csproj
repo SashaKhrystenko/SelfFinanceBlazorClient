@@ -18,6 +18,8 @@
     <PackageReference Include="Blazor.Bootstrap" Version="3.4.0" />
     <PackageReference Include="NSwag.ConsoleCore" Version="8.8.0" />
     <PackageReference Include="NSwag.Core" Version="14.4.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.1" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
 
 </Project>

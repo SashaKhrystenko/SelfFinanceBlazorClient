@@ -15,7 +15,7 @@
                     <Button Class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(category)">Update</Button>
                 </td>
                 <td>
-                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDeletedAsync(category)">Delete</Button>
+                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDeletedAsync(category.Id)">Delete</Button>
                 </td>
             </tr>
         }
@@ -37,7 +37,7 @@
     public EventCallback<ExpenseCategoryModel> OnUpdate { get; set; }
 
     [Parameter]
-    public EventCallback<ExpenseCategoryModel> OnCategoryDelete { get; set; }
+    public EventCallback<Guid> OnCategoryDelete { get; set; }
 
     protected override void OnInitialized()
     {
@@ -54,9 +54,9 @@
         StateHasChanged();
     }
 
-    private async Task OnCategoryDeletedAsync(ExpenseCategoryModel category)
+    private async Task OnCategoryDeletedAsync(Guid categoryId)
     {
-        await OnCategoryDelete.InvokeAsync(category);
+        await OnCategoryDelete.InvokeAsync(categoryId);
     }
 
     private void ShowPageData()

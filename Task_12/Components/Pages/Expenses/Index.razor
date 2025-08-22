@@ -1,4 +1,6 @@
 ﻿@page "/expenses"
+@using Microsoft.AspNetCore.Http
+@using Task_12.Providers.Network
 @rendermode InteractiveServer
 
 <PageTitle>Expenses</PageTitle>
@@ -28,63 +30,64 @@
     private UpdateExpenseModal _updateExpenseModal;
     private Popup _popup;
 
-    private IReadOnlyList<ExpenseModel> _expenses;
-    private IReadOnlyList<ExpenseCategoryModel> _expenseCategories;
+    private IEnumerable<ExpenseModel> _expenses;
+    private IEnumerable<ExpenseCategoryModel> _expenseCategories;
     private IEnumerable<ExpenseModel> _itemsOnPage;
 
     private int _amountOfItemsOnList = 5;
 
     [Inject]
-    private Client _client { get; set; }
+    private INetworkProvider _networkProvider { get; set; }
 
     protected override void OnInitialized()
     {
-        _expenses = _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending).Result;
-        _expenseCategories = _client.GetSortedExpenseCategoriesAsync(ExpenseCategoryFilter.Name, byDescending: false).Result;
+        _expenses = _networkProvider.Get<IEnumerable<ExpenseModel>>(
+            SelfFinanceApiRoutes.ExpenseController.MakeGetSortedExpensesRoute(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending)
+        ).ResponseData;
+
+        _expenseCategories = _networkProvider.Get<IEnumerable<ExpenseCategoryModel>>(
+            SelfFinanceApiRoutes.ExpenseCategoryController.MakeGetSortedExpenseCategoriesRoute(ExpenseCategoryFilter.Name, byDescending: false)
+        ).ResponseData;
 
         _itemsOnPage = _expenses.Take(_amountOfItemsOnList);
     }
 
     private async Task UpdateExpenseListData()
     {
-        _expenses = await _client.GetSortedExpensesAsync(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending);
+        RequestResult<IEnumerable<ExpenseModel>> requestResult = await _networkProvider.GetAsync<IEnumerable<ExpenseModel>>(
+            SelfFinanceApiRoutes.ExpenseController.MakeGetSortedExpensesRoute(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending)
+        );
+
+        _expenses = requestResult.ResponseData;
 
         ShowPageData();
 
         StateHasChanged();
     }
 
-    private void ShowPageData()
-    {
-        _itemsOnPage = _expenses
-            .Skip((_paginator.CurrentPage - 1) * _amountOfItemsOnList)
-            .Take(_amountOfItemsOnList)
-        ;
-    }
-
     private async Task UpdateExpense(ExpenseModel expense)
     {
-        await _client.UpdateExpenseAsync(expense);
+        RequestResult requestResult = await _networkProvider.PatchAsync(SelfFinanceApiRoutes.ExpenseController.UpdateExpense, expense);
 
-        _popup.ShowSuccess("Expense was updated.");
-
-        await UpdateExpenseListData();
-    }
-
-    private async Task OnSuccessExpenseAddingAsync(ExpenseModel expense)
-    {
-        await _client.AddExpenseAsync(expense.Amount, expense.Category);
-
-        _popup.ShowSuccess("Expense was added.");
+        ShowPopupByResult(requestResult);
 
         await UpdateExpenseListData();
     }
 
-    private async Task OnExpenseDeleteAsync(ExpenseModel expense)
+    private async Task OnSuccessExpenseAddingAsync(HttpContent httpContent)
     {
-        await _client.DeleteExpenseAsync(expense);
+        RequestResult requestResult = await _networkProvider.PostAsync(SelfFinanceApiRoutes.ExpenseController.AddExpense, httpContent);
 
-        _popup.ShowSuccess("Expense was deleted.");
+        ShowPopupByResult(requestResult);
+
+        await UpdateExpenseListData();
+    }
+
+    private async Task OnExpenseDeleteAsync(Guid expenseId)
+    {
+        RequestResult requestResult = await _networkProvider.DeleteAsync(SelfFinanceApiRoutes.ExpenseController.MakeDeleteExpenseRoute(expenseId));
+
+        ShowPopupByResult(requestResult);
 
         await UpdateExpenseListData();
     }
@@ -97,5 +100,25 @@
     private void ShowUpdateExpenseModal(ExpenseModel expense)
     {
         _updateExpenseModal.ShowModal(expense);
+    }
+
+    private void ShowPageData()
+    {
+        _itemsOnPage = _expenses
+            .Skip((_paginator.CurrentPage - 1) * _amountOfItemsOnList)
+            .Take(_amountOfItemsOnList)
+        ;
+    }
+
+    private void ShowPopupByResult(RequestResult requestResult)
+    {
+        if (requestResult.IsSuccess)
+        {
+            _popup.ShowSuccess(requestResult.Message);
+        }
+        else
+        {
+            _popup.ShowError(requestResult.Message);
+        }
     }
 }

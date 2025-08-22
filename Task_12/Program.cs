@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Net.Http;
 using Task_12.Components;
+using Task_12.Interfaces;
+using Task_12.Providers.Network;
 
 namespace Task_12
 {
@@ -24,14 +25,9 @@ namespace Task_12
 
         private static void ConfigureService(IServiceCollection services)
         {
-            services.AddScoped(sp =>
+            services.AddHttpClient<INetworkProvider, NetworkProvider>(options =>
             {
-                HttpClient httpClient = new()
-                {
-                    BaseAddress = new Uri("https://localhost:7089/")
-                };
-
-                return new Client("https://localhost:7089/", httpClient);
+                options.BaseAddress = new Uri("https://localhost:7089/");
             });
 
             services.AddRazorComponents()

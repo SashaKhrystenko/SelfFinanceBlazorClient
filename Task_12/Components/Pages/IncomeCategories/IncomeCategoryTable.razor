@@ -15,7 +15,7 @@
                     <Button Class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(category)">Update</Button>
                 </td>
                 <td>
-                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDelete.InvokeAsync(category)">Delete</Button>
+                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDelete.InvokeAsync(category.Id)">Delete</Button>
                 </td>
             </tr>
         }
@@ -34,7 +34,7 @@
     public IEnumerable<IncomeCategoryModel> IncomeCategories { get; set; }
 
     [Parameter]
-    public EventCallback<IncomeCategoryModel> OnCategoryDelete { get; set; }
+    public EventCallback<Guid> OnCategoryDelete { get; set; }
 
     [Parameter]
     public EventCallback<IncomeCategoryModel> OnUpdate { get; set; }
