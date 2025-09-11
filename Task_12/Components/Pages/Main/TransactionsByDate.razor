@@ -1,0 +1,37 @@
+﻿
+@if (Transactions.Count > 0)
+{
+    @foreach (DateOnly date in Transactions.Keys)
+    {
+        <div class="my-4">
+            <h4>@date</h4>
+
+            <table class="table">
+                <colgroup>
+                    <col class="w-25" />
+                    <col class="w-50" />
+                    <col class="w-25" />
+                </colgroup>
+                <tbody>
+                    @foreach (TransactionModel transaction in Transactions[date])
+                    {
+                        <tr>
+                            <td>@transaction.Date</td>
+                            <td>@transaction.Category</td>
+                            <td>@transaction.Amount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else
+{
+    <h1 class="text-center">No transaction found</h1>
+}
+
+@code {
+    [Parameter]
+    public Dictionary<DateOnly, TransactionModel[]> Transactions { get; set; }
+}

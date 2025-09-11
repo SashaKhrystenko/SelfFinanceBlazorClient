@@ -1,0 +1,34 @@
+﻿@using BlazorDateRangePicker
+
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+<h1 class="text-center">Transaction reports</h1>
+
+<DateSortToolbar OnRangeSelect="OnRangeSelect" />
+
+<TransactionsByDate Transactions="_transactionDictionary"/>
+
+@code {
+    private Dictionary<DateOnly, TransactionModel[]> _transactionDictionary;
+
+    [Inject]
+    private INetworkProvider _networkProvider { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _transactionDictionary = _networkProvider.Get<Dictionary<DateOnly, TransactionModel[]>>(SelfFinanceApiRoutes.FinancialSummaryController.GetAllTransactions).ResponseData;
+    }
+
+    private void OnRangeSelect(DateRange dateRange)
+    {
+        string route = SelfFinanceApiRoutes.FinancialSummaryController.MakeGetDatePeriodReportRoute(
+            DateOnly.FromDateTime(dateRange.Start.Date),
+            DateOnly.FromDateTime(dateRange.End.Date)
+        );
+
+        _transactionDictionary = _networkProvider.Get<Dictionary<DateOnly, TransactionModel[]>>(route).ResponseData;
+    }
+}

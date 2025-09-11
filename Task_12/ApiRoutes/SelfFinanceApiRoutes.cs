@@ -123,5 +123,34 @@ namespace Task_12.ApiRoutes
                 return $"{_baseControllerRoute}/delete-income-category/{id}";
             }
         }
+
+        public static class FinancialSummaryController
+        {
+            private const string _baseControllerRoute = "/financial-summary";
+
+            public const string GetBalance = $"{_baseControllerRoute}/get-balance";
+            public const string GetAllTransactions = $"{_baseControllerRoute}/get-all-transactions";
+
+            public static string MakeGetDailyReportRoute(DateOnly date)
+            {
+                Dictionary<string, string> queryParams = new()
+                {
+                    { nameof(date), date.ToString() }
+                };
+
+                return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-daily-report", queryParams);
+            }
+
+            public static string MakeGetDatePeriodReportRoute(DateOnly startDate, DateOnly endDate)
+            {
+                Dictionary<string, string> queryParams = new()
+                {
+                    { nameof(startDate), startDate.ToString() },
+                    { nameof(endDate), endDate.ToString() }
+                };
+
+                return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-date-period-report", queryParams);
+            }
+        }
     }
 }
