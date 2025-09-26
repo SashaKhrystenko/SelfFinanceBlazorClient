@@ -1,35 +1,38 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Task_12.Interfaces;
+using Task_12.Providers.Network.Settings;
 
 namespace Task_12.Providers.Network
 {
     public class NetworkProvider : INetworkProvider
     {
-        private readonly HttpClient _httpClient;
+        private readonly Dictionary<string, HttpClient> _httpClientDictionary;
+        private readonly Dictionary<string, JwtSecurityToken> _jwtSecurityTokenDictionary;
+
         private readonly JwtSecurityTokenHandler _jwtHandler;
 
-        private JwtSecurityToken _jwtToken;
-
-        public NetworkProvider(HttpClient httpClent)
+        public NetworkProvider()
         {
-            if (httpClent == null)
-            {
-                throw new ArgumentNullException(nameof(httpClent), $"{nameof(httpClent)} is null.");
-            }
-
-            _httpClient = httpClent;
+            _httpClientDictionary = new Dictionary<string, HttpClient>();
+            _jwtSecurityTokenDictionary = new Dictionary<string, JwtSecurityToken>();
 
             _jwtHandler = new JwtSecurityTokenHandler();
         }
 
-        public RequestResult<TResposeData> Get<TResposeData>(string url)
+        public RequestResult<TResposeData> Get<TResposeData>(BaseNetworkSettings networkSettings, string url)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -40,14 +43,18 @@ namespace Task_12.Providers.Network
                 throw new ArgumentException($"'{url}' is not url.", nameof(url));
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
+
+            JwtSecurityToken jwtToken = GetOrCreateNewJwtToken(httpClient, networkSettings);
+
+            if (jwtToken == null || DateTime.UtcNow >= jwtToken.ValidTo)
             {
-                _jwtToken = GetNewToken();
+                jwtToken = CreateNewToken(httpClient, networkSettings);
             }
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
 
-            HttpResponseMessage httpResponse = _httpClient.GetAsync(url).Result;
+            HttpResponseMessage httpResponse = httpClient.GetAsync(url).Result;
 
             if (!httpResponse.IsSuccessStatusCode)
             {
@@ -70,8 +77,13 @@ namespace Task_12.Providers.Network
             };
         }
 
-        public RequestResult Post(string url, HttpContent httpContent)
+        public RequestResult Post(BaseNetworkSettings networkSettings, string url, HttpContent httpContent)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -87,14 +99,13 @@ namespace Task_12.Providers.Network
                 throw new ArgumentNullException(nameof(httpContent), $"{nameof(httpContent)} is null.");
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
-            {
-                _jwtToken = GetNewToken();
-            }
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            JwtSecurityToken jwtToken = GetOrCreateNewJwtToken(httpClient, networkSettings);
 
-            HttpResponseMessage httpResponse = _httpClient.PostAsync(url, httpContent).Result;
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
+
+            HttpResponseMessage httpResponse = httpClient.PostAsync(url, httpContent).Result;
 
             return new RequestResult()
             {
@@ -104,8 +115,13 @@ namespace Task_12.Providers.Network
             };
         }
 
-        public RequestResult Delete(string url)
+        public RequestResult Delete(BaseNetworkSettings networkSettings, string url)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -116,14 +132,13 @@ namespace Task_12.Providers.Network
                 throw new ArgumentException($"'{url}' is not url.", nameof(url));
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
-            {
-                _jwtToken = GetNewTokenAsync().Result;
-            }
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            JwtSecurityToken jwtToken = GetOrCreateNewJwtToken(httpClient, networkSettings);
 
-            HttpResponseMessage httpResponse = _httpClient.DeleteAsync(url).Result;
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
+
+            HttpResponseMessage httpResponse = httpClient.DeleteAsync(url).Result;
 
             return new RequestResult()
             {
@@ -133,8 +148,13 @@ namespace Task_12.Providers.Network
             };
         }
 
-        public RequestResult Patch<TDataType>(string url, TDataType data)
+        public RequestResult Patch<TDataType>(BaseNetworkSettings networkSettings, string url, TDataType data)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -150,14 +170,13 @@ namespace Task_12.Providers.Network
                 throw new ArgumentNullException(nameof(data), $"{nameof(data)} is null.");
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
-            {
-                _jwtToken = GetNewToken();
-            }
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            JwtSecurityToken jwtToken = GetOrCreateNewJwtToken(httpClient, networkSettings);
 
-            HttpResponseMessage httpResponse = _httpClient.PatchAsJsonAsync(url, data).Result;
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
+
+            HttpResponseMessage httpResponse = httpClient.PatchAsJsonAsync(url, data).Result;
 
             return new RequestResult()
             {
@@ -167,8 +186,13 @@ namespace Task_12.Providers.Network
             };
         }
 
-        public async Task<RequestResult<TResposeData>> GetAsync<TResposeData>(string url)
+        public async Task<RequestResult<TResposeData>> GetAsync<TResposeData>(BaseNetworkSettings networkSettings, string url)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -179,14 +203,13 @@ namespace Task_12.Providers.Network
                 throw new ArgumentException($"'{url}' is not url.", nameof(url));
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
-            {
-                _jwtToken = await GetNewTokenAsync();
-            }
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            JwtSecurityToken jwtToken = await GetOrCreateNewJwtTokenAsync(httpClient, networkSettings);
 
-            HttpResponseMessage httpResponse = await _httpClient.GetAsync(url);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
+
+            HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
 
             if (!httpResponse.IsSuccessStatusCode)
             {
@@ -210,8 +233,13 @@ namespace Task_12.Providers.Network
             };
         }
 
-        public async Task<RequestResult> PostAsync(string url, HttpContent httpContent)
+        public async Task<RequestResult> PostAsync(BaseNetworkSettings networkSettings, string url, HttpContent httpContent)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -227,14 +255,13 @@ namespace Task_12.Providers.Network
                 throw new ArgumentNullException(nameof(httpContent), $"{nameof(httpContent)} is null.");
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
-            {
-                _jwtToken = await GetNewTokenAsync();
-            }
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            JwtSecurityToken jwtToken = await GetOrCreateNewJwtTokenAsync(httpClient, networkSettings);
 
-            HttpResponseMessage httpResponse = await _httpClient.PostAsync(url, httpContent);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
+
+            HttpResponseMessage httpResponse = await httpClient.PostAsync(url, httpContent);
 
             return new RequestResult()
             {
@@ -244,8 +271,13 @@ namespace Task_12.Providers.Network
             };
         }
 
-        public async Task<RequestResult> DeleteAsync(string url)
+        public async Task<RequestResult> DeleteAsync(BaseNetworkSettings networkSettings, string url)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -256,14 +288,13 @@ namespace Task_12.Providers.Network
                 throw new ArgumentException($"'{url}' is not url.", nameof(url));
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
-            {
-                _jwtToken = GetNewTokenAsync().Result;
-            }
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            JwtSecurityToken jwtToken = await GetOrCreateNewJwtTokenAsync(httpClient, networkSettings);
 
-            HttpResponseMessage httpResponse = await _httpClient.DeleteAsync(url);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
+
+            HttpResponseMessage httpResponse = await httpClient.DeleteAsync(url);
 
             return new RequestResult()
             {
@@ -273,8 +304,13 @@ namespace Task_12.Providers.Network
             };
         }
 
-        public async Task<RequestResult> PatchAsync<TDataType>(string url, TDataType data)
+        public async Task<RequestResult> PatchAsync<TDataType>(BaseNetworkSettings networkSettings, string url, TDataType data)
         {
+            if (networkSettings == null)
+            {
+                throw new ArgumentNullException(nameof(networkSettings), $"{nameof(networkSettings)} is null.");
+            }
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentException($"{nameof(url)} is null or white space.", nameof(url));
@@ -290,14 +326,13 @@ namespace Task_12.Providers.Network
                 throw new ArgumentNullException(nameof(data), $"{nameof(data)} is null.");
             }
 
-            if (_jwtToken == null || DateTime.UtcNow >= _jwtToken.ValidTo)
-            {
-                _jwtToken = await GetNewTokenAsync();
-            }
+            HttpClient httpClient = CreateOrGetHttpClientFromDictionary(networkSettings.BaseUrl);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken.RawData);
+            JwtSecurityToken jwtToken = await GetOrCreateNewJwtTokenAsync(httpClient, networkSettings);
 
-            HttpResponseMessage httpResponse = await _httpClient.PatchAsJsonAsync(url, data);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken.RawData);
+
+            HttpResponseMessage httpResponse = await httpClient.PatchAsJsonAsync(url, data);
 
             return new RequestResult()
             {
@@ -307,9 +342,9 @@ namespace Task_12.Providers.Network
             };
         }
 
-        private async Task<JwtSecurityToken> GetNewTokenAsync()
+        private async Task<JwtSecurityToken> CreateNewTokenAsync(HttpClient httpClient, BaseNetworkSettings settings)
         {
-            HttpResponseMessage httpResponse = await _httpClient.GetAsync("/login?clientName=admin&password=123");
+            HttpResponseMessage httpResponse = await httpClient.PostAsJsonAsync(settings.AuthorizationRoute, settings.LoginRequest);
 
             if (httpResponse.IsSuccessStatusCode)
             {
@@ -319,9 +354,9 @@ namespace Task_12.Providers.Network
             throw new Exception(await httpResponse.Content.ReadAsStringAsync());
         }
 
-        private JwtSecurityToken GetNewToken()
+        private JwtSecurityToken CreateNewToken(HttpClient httpClient, BaseNetworkSettings settings)
         {
-            HttpResponseMessage httpResponse = _httpClient.GetAsync("/login?clientName=admin&password=123").Result;
+            HttpResponseMessage httpResponse = httpClient.PostAsJsonAsync(settings.AuthorizationRoute, settings.LoginRequest).Result;
 
             if (httpResponse.IsSuccessStatusCode)
             {
@@ -329,6 +364,63 @@ namespace Task_12.Providers.Network
             }
 
             throw new Exception(httpResponse.Content.ReadAsStringAsync().Result);
+        }
+
+        private HttpClient CreateOrGetHttpClientFromDictionary(string baseUrl)
+        {
+            if (_httpClientDictionary.TryGetValue(baseUrl, out HttpClient httpClient))
+            {
+                return httpClient;
+            }
+
+            httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(baseUrl);
+
+            _httpClientDictionary.Add(baseUrl, httpClient);
+
+            return httpClient;
+        }
+
+        private JwtSecurityToken GetOrCreateNewJwtToken(HttpClient httpClient, BaseNetworkSettings networkSettings)
+        {
+            if (_jwtSecurityTokenDictionary.TryGetValue(networkSettings.BaseUrl, out JwtSecurityToken jwtToken))
+            {
+                if (jwtToken != null && DateTime.UtcNow < jwtToken.ValidTo)
+                {
+                    return jwtToken;
+                }
+                else
+                {
+                    _jwtSecurityTokenDictionary[networkSettings.BaseUrl] = CreateNewToken(httpClient, networkSettings);
+                }
+            }
+            else
+            {
+                _jwtSecurityTokenDictionary.Add(networkSettings.BaseUrl, CreateNewToken(httpClient, networkSettings));
+            }
+
+            return _jwtSecurityTokenDictionary[networkSettings.BaseUrl];
+        }
+
+        private async Task<JwtSecurityToken> GetOrCreateNewJwtTokenAsync(HttpClient httpClient, BaseNetworkSettings networkSettings)
+        {
+            if (_jwtSecurityTokenDictionary.TryGetValue(networkSettings.BaseUrl, out JwtSecurityToken jwtToken))
+            {
+                if (jwtToken != null && DateTime.UtcNow < jwtToken.ValidTo)
+                {
+                    return jwtToken;
+                }
+                else
+                {
+                    _jwtSecurityTokenDictionary[networkSettings.BaseUrl] = await CreateNewTokenAsync(httpClient, networkSettings);
+                }
+            }
+            else
+            {
+                _jwtSecurityTokenDictionary.Add(networkSettings.BaseUrl, await CreateNewTokenAsync(httpClient, networkSettings));
+            }
+
+            return _jwtSecurityTokenDictionary[networkSettings.BaseUrl];
         }
     }
 }

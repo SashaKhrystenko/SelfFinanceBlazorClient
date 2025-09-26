@@ -3,9 +3,12 @@
         <label>Category:</label>
         <InputSelect class="form-select" @bind-Value="expense.Category">
             <option value="" disabled selected hidden></option>
-            @foreach (ExpenseCategoryModel expenseCategory in ExpenseCategories)
+            @if(ExpenseCategories?.Count() > 0)
             {
-                <option value="@expenseCategory.Name">@expenseCategory.Name</option>
+                @foreach (ExpenseCategoryModel expenseCategory in ExpenseCategories)
+                {
+                    <option value="@expenseCategory.Name">@expenseCategory.Name</option>
+                }
             }
         </InputSelect>
     </div>

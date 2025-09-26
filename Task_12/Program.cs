@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
+using System.IO;
 using Task_12.Components;
 using Task_12.Interfaces;
 using Task_12.Providers.Network;
+using Task_12.Providers.Network.Settings;
 
 namespace Task_12
 {
@@ -25,9 +27,17 @@ namespace Task_12
 
         private static void ConfigureService(IServiceCollection services)
         {
-            services.AddHttpClient<INetworkProvider, NetworkProvider>(options =>
+            IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false)
+                .Build()
+            ;
+
+            services.AddSingleton<INetworkProvider, NetworkProvider>();
+
+            services.AddSingleton<SelfFinanceNetworkSettings>(settings =>
             {
-                options.BaseAddress = new Uri("https://localhost:7089/");
+                return configuration.GetSection("NetworkSettings:SelfFinance").Get<SelfFinanceNetworkSettings>();
             });
 
             services.AddRazorComponents()
@@ -39,9 +49,11 @@ namespace Task_12
 
         private static void ConfigureApp(WebApplication app)
         {
+            app.UseExceptionHandler("/Error500", createScopeForErrors: true);
+
             if (!app.Environment.IsDevelopment())
             {
-                app.UseExceptionHandler("/Error", createScopeForErrors: true);
+                app.UseExceptionHandler("/Error500", createScopeForErrors: true);
 
                 app.UseHsts();
             }

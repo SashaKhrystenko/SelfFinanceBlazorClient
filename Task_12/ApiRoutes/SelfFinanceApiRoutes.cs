@@ -6,6 +6,11 @@ namespace Task_12.ApiRoutes
 {
     public static class SelfFinanceApiRoutes
     {
+        public static class AuthorizationController
+        {
+            public const string Login = "/login";
+        }
+
         public static class ExpenseController
         {
             private const string _baseControllerRoute = "/expenses";
@@ -150,6 +155,28 @@ namespace Task_12.ApiRoutes
                 };
 
                 return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-date-period-report", queryParams);
+            }
+
+            public static string MakeGetIncomeAmountInDateRangeRoute(DateOnly startDate, DateOnly endDate)
+            {
+                Dictionary<string, string> queryParams = new()
+                {
+                    { nameof(startDate), startDate.ToString() },
+                    { nameof(endDate), endDate.ToString() }
+                };
+
+                return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-income-amount-in-date-range", queryParams);
+            }
+
+            public static string MakeGetExpenseAmountInDateRangeRoute(DateOnly startDate, DateOnly endDate)
+            {
+                Dictionary<string, string> queryParams = new()
+                {
+                    { nameof(startDate), startDate.ToString() },
+                    { nameof(endDate), endDate.ToString() }
+                };
+
+                return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-expense-amount-in-date-range", queryParams);
             }
         }
     }

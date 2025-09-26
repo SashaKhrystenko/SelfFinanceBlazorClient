@@ -5,7 +5,10 @@
 
 <h1>Income categories</h1>
 
-<IncomeCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
+@if(_incomeCategories?.Count() > 0)
+{
+    <IncomeCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
+}
 
 <IncomeCategoryTable IncomeCategories="_incomeCategories" OnCategoryDelete="OnCategoryDeletedAsync" OnUpdate="ShowUpdateIncomeCategoryModal" />
 
@@ -28,29 +31,49 @@
     private IEnumerable<IncomeCategoryModel> _incomeCategories;
 
     [Inject]
+    private SelfFinanceNetworkSettings _selfFinanceNetworkSettings { get; set; }
+
+    [Inject]
     private INetworkProvider _networkProvider { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _incomeCategories = _networkProvider.Get<IEnumerable<IncomeCategoryModel>>(
+        RequestResult<IEnumerable<IncomeCategoryModel>> getIncomeCategoryResult = await _networkProvider.GetAsync<IEnumerable<IncomeCategoryModel>>(
+            _selfFinanceNetworkSettings,
             SelfFinanceApiRoutes.IncomeCategoryController.MakeGetSortedIncomeCategoriesRoute(_sortOption.IncomeCategoryFilter, _sortOption.ByDescending)
-        ).ResponseData;
+        );
+
+        _incomeCategories = getIncomeCategoryResult.ResponseData;
     }
 
     private async Task OnCategoryAddedAsync(HttpContent httpContent)
     {
-        RequestResult requestResult = await _networkProvider.PostAsync(SelfFinanceApiRoutes.IncomeCategoryController.AddIncomeCategory, httpContent);
+        RequestResult requestResult = await _networkProvider.PostAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.AddIncomeCategory,
+            httpContent
+        );
 
-        ShowPopupByResult(requestResult);
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Income category could not be added");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
 
-        await UpdateListDataAsync();
+            await UpdateListDataAsync();
+        }
     }
 
     private async Task OnCategoryDeletedAsync(Guid categoryId)
     {
-        RequestResult requestResult = await _networkProvider.DeleteAsync(SelfFinanceApiRoutes.IncomeCategoryController.MakeDeleteIncomeCategorydRoute(categoryId));
+        RequestResult requestResult = await _networkProvider.DeleteAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.MakeDeleteIncomeCategorydRoute(categoryId)
+        );
 
-        ShowPopupByResult(requestResult);
+        _popup.ShowPopupByResult(requestResult);
 
         await UpdateListDataAsync();
     }
@@ -58,6 +81,7 @@
     private async Task UpdateListDataAsync()
     {
         RequestResult<IEnumerable<IncomeCategoryModel>> requestResult = await _networkProvider.GetAsync<IEnumerable<IncomeCategoryModel>>(
+            _selfFinanceNetworkSettings,
             SelfFinanceApiRoutes.IncomeCategoryController.MakeGetSortedIncomeCategoriesRoute(_sortOption.IncomeCategoryFilter, _sortOption.ByDescending)
         );
 
@@ -66,11 +90,22 @@
 
     private async Task OnIncomeUpdate(IncomeCategoryModel editingCategory)
     {
-        RequestResult requestResult = await _networkProvider.PatchAsync(SelfFinanceApiRoutes.IncomeCategoryController.UpdateIncomeCategory, editingCategory);
+        RequestResult requestResult = await _networkProvider.PatchAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.UpdateIncomeCategory,
+            editingCategory
+        );
 
-        ShowPopupByResult(requestResult);
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Income category could not be updated");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
 
-        await UpdateListDataAsync();
+            await UpdateListDataAsync();
+        }
     }
 
     private void ShowUpdateIncomeCategoryModal(IncomeCategoryModel editingCategory)
@@ -81,17 +116,5 @@
     private void ShowErrorPopup(string message)
     {
         _popup.ShowError(message);
-    }
-
-    private void ShowPopupByResult(RequestResult requestResult)
-    {
-        if (requestResult.IsSuccess)
-        {
-            _popup.ShowSuccess(requestResult.Message);
-        }
-        else
-        {
-            _popup.ShowError(requestResult.Message);
-        }
     }
 }

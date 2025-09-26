@@ -1,28 +1,35 @@
-﻿<table class="table table-striped">
-    <thead>
-        <tr>
-            <td>Name</td>
-            <td>Update</td>
-            <td>Delete</td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (IncomeCategoryModel category in _categoriesOnList)
-        {
+﻿@if (_categoriesOnList?.Count() > 0)
+{
+    <table class="table table-striped">
+        <thead>
             <tr>
-                <td>@category.Name</td>
-                <td>
-                    <Button Class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(category)">Update</Button>
-                </td>
-                <td>
-                    <Button Class="btn btn-primary" @onclick="() => OnCategoryDelete.InvokeAsync(category.Id)">Delete</Button>
-                </td>
+                <td>Name</td>
+                <td>Update</td>
+                <td>Delete</td>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (IncomeCategoryModel category in _categoriesOnList)
+            {
+                <tr>
+                    <td>@category.Name</td>
+                    <td>
+                        <Button Class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(category)">Update</Button>
+                    </td>
+                    <td>
+                        <Button Class="btn btn-primary" @onclick="() => OnCategoryDelete.InvokeAsync(category.Id)">Delete</Button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 
-<Paginator @ref="_paginator" ItemList="IncomeCategories" AmountOfItemsOnPage="_amountCategoriesOnList" OnPageChange="ShowPageData" />
+    <Paginator @ref="_paginator" ItemList="IncomeCategories" AmountOfItemsOnPage="_amountCategoriesOnList" OnPageChange="ShowPageData" />
+}
+else
+{
+    <p class="text-center my-5 fs-3">No income categories found</p>
+}
 
 @code {
     private const int _amountCategoriesOnList = 5;
@@ -39,16 +46,15 @@
     [Parameter]
     public EventCallback<IncomeCategoryModel> OnUpdate { get; set; }
 
-    protected override void OnInitialized()
-    {
-        _categoriesOnList = IncomeCategories.Take(_amountCategoriesOnList);
-    }
-
     protected override void OnParametersSet()
     {
         if (_paginator != null)
         {
             ShowPageData();
+        }
+        else
+        {
+            _categoriesOnList = IncomeCategories?.Take(_amountCategoriesOnList);
         }
 
         StateHasChanged();
@@ -56,7 +62,7 @@
 
     private void ShowPageData()
     {
-        _categoriesOnList = IncomeCategories
+        _categoriesOnList = IncomeCategories?
             .Skip((_paginator.CurrentPage - 1) * _amountCategoriesOnList)
             .Take(_amountCategoriesOnList)
         ;

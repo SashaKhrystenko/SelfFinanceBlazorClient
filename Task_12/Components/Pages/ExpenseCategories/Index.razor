@@ -1,11 +1,15 @@
 ﻿@page "/expense-categories"
+@using Microsoft.AspNetCore.Http
 @rendermode InteractiveServer
 
 <PageTitle>Expense categories</PageTitle>
 
 <h1>Expense categories</h1>
 
-<ExpanseCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
+@if (_expenseCategories?.Count() > 0)
+{
+    <ExpanseCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
+}
 
 <ExpenseCategoryTable ExpenseCategories="_expenseCategories" OnCategoryDelete="OnCategoryDeletedAsync" OnUpdate="ShowUpdateExpenseCategoryModal" />
 
@@ -28,29 +32,49 @@
     private IEnumerable<ExpenseCategoryModel> _expenseCategories;
 
     [Inject]
+    private SelfFinanceNetworkSettings _selfFinanceNetworkSettings { get; set; }
+
+    [Inject]
     private INetworkProvider _networkProvider { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _expenseCategories = _networkProvider.Get<IEnumerable<ExpenseCategoryModel>>(
+        RequestResult<IEnumerable<ExpenseCategoryModel>> getExpenseCategoriesResult = await _networkProvider.GetAsync<IEnumerable<ExpenseCategoryModel>>(
+            _selfFinanceNetworkSettings,
             SelfFinanceApiRoutes.ExpenseCategoryController.MakeGetSortedExpenseCategoriesRoute(_sortOption.ExpenseCategoryFilter, _sortOption.ByDescending)
-        ).ResponseData;
+        );
+
+        _expenseCategories = getExpenseCategoriesResult.ResponseData;
     }
 
     private async Task OnCategoryAddedAsync(HttpContent httpContent)
     {
-        RequestResult requestResult = await _networkProvider.PostAsync(SelfFinanceApiRoutes.ExpenseCategoryController.AddExpenseCategory, httpContent);
+        RequestResult requestResult = await _networkProvider.PostAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseCategoryController.AddExpenseCategory,
+            httpContent
+        );
 
-        ShowPopupByResult(requestResult);
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Expense category could not be added");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
 
-        await UpdateListDataAsync();
+            await UpdateListDataAsync();
+        }
     }
 
     private async Task OnCategoryDeletedAsync(Guid id)
     {
-        RequestResult requestResult = await _networkProvider.DeleteAsync(SelfFinanceApiRoutes.ExpenseCategoryController.MakeDeleteExpenseCategorydRoute(id));
+        RequestResult requestResult = await _networkProvider.DeleteAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseCategoryController.MakeDeleteExpenseCategorydRoute(id)
+        );
 
-        ShowPopupByResult(requestResult);
+        _popup.ShowPopupByResult(requestResult);
 
         await UpdateListDataAsync();
     }
@@ -58,6 +82,7 @@
     private async Task UpdateListDataAsync()
     {
         RequestResult<IEnumerable<ExpenseCategoryModel>> requestResult = await _networkProvider.GetAsync<IEnumerable<ExpenseCategoryModel>>(
+            _selfFinanceNetworkSettings,
             SelfFinanceApiRoutes.ExpenseCategoryController.MakeGetSortedExpenseCategoriesRoute(_sortOption.ExpenseCategoryFilter, _sortOption.ByDescending)
         );
 
@@ -66,11 +91,21 @@
 
     private async Task OnExpenseCategoryUpdate(ExpenseCategoryModel expenseCategory)
     {
-        RequestResult requestResult = await _networkProvider.PatchAsync(SelfFinanceApiRoutes.ExpenseCategoryController.UpdateExpenseCategory, expenseCategory);
+        RequestResult requestResult = await _networkProvider.PatchAsync(_selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseCategoryController.UpdateExpenseCategory,
+            expenseCategory
+        );
 
-        ShowPopupByResult(requestResult);
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Expense category could not be added");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
 
-        await UpdateListDataAsync();
+            await UpdateListDataAsync();
+        }
     }
 
     private void ShowUpdateExpenseCategoryModal(ExpenseCategoryModel expenseCategory)
@@ -81,17 +116,5 @@
     private void ShowErrorPopup(string message)
     {
         _popup.ShowError(message);
-    }
-
-    private void ShowPopupByResult(RequestResult requestResult)
-    {
-        if (requestResult.IsSuccess)
-        {
-            _popup.ShowSuccess(requestResult.Message);
-        }
-        else
-        {
-            _popup.ShowError(requestResult.Message);
-        }
     }
 }

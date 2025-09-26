@@ -1,9 +1,8 @@
-﻿
-@if (Transactions.Count > 0)
+﻿@if (Transactions?.Count > 0)
 {
     @foreach (DateOnly date in Transactions.Keys)
     {
-        <div class="my-4">
+        <div class="my-5">
             <h4>@date</h4>
 
             <table class="table">
@@ -28,7 +27,7 @@
 }
 else
 {
-    <h1 class="text-center">No transaction found</h1>
+    <p class="text-center my-5 fs-3">No transaction found</p>
 }
 
 @code {

@@ -16,14 +16,12 @@
 
     public int CurrentPage = 1;
 
-    protected override void OnInitialized()
-    {
-        _totalPages = CalculateTotalPages();
-    }
-
     protected override void OnParametersSet()
     {
-        _totalPages = CalculateTotalPages();
+        if (ItemList?.Count() > 0)
+        {
+            _totalPages = CalculateTotalPages();
+        }
     }
 
     private int CalculateTotalPages()

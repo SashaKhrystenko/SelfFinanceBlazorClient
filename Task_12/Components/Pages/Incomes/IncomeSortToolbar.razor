@@ -40,6 +40,9 @@
     [Parameter]
     public EventCallback OnSelectbarChanges { get; set; }
 
+    [Parameter]
+    public bool IsVisible { get; set; }
+
     private void OnSortOrderButtonClicked()
     {
         IncomeSortOption.ByDescending = !IncomeSortOption.ByDescending;

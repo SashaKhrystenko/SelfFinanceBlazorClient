@@ -1,4 +1,5 @@
 ﻿@using BlazorDateRangePicker
+@using Task_12.Providers.Network.Settings
 
 @page "/"
 @rendermode InteractiveServer
@@ -7,28 +8,93 @@
 
 <h1 class="text-center">Transaction reports</h1>
 
-<DateSortToolbar OnRangeSelect="OnRangeSelect" />
+<DateSortToolbar OnRangeSelect="OnRangeSelectAsync" IsVisible="_isDataSelectorVisible"/>
 
 <TransactionsByDate Transactions="_transactionDictionary"/>
+
+<DataInfoPanel IncomeAmount="@_incomeAmount" ExpenseAmount="_expenseAmount" BalanceAmount="@_balance" IsVisible="_isDataInfoPanelVisible" />
 
 @code {
     private Dictionary<DateOnly, TransactionModel[]> _transactionDictionary;
 
+    private bool _isDataSelectorVisible;
+    private bool _isDataInfoPanelVisible;
+
+    private decimal _incomeAmount;
+    private decimal _expenseAmount;
+    private decimal _balance;
+
+    [Inject]
+    private SelfFinanceNetworkSettings _networkSettings { get; set; }
+
     [Inject]
     private INetworkProvider _networkProvider { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _transactionDictionary = _networkProvider.Get<Dictionary<DateOnly, TransactionModel[]>>(SelfFinanceApiRoutes.FinancialSummaryController.GetAllTransactions).ResponseData;
-    }
-
-    private void OnRangeSelect(DateRange dateRange)
-    {
-        string route = SelfFinanceApiRoutes.FinancialSummaryController.MakeGetDatePeriodReportRoute(
-            DateOnly.FromDateTime(dateRange.Start.Date),
-            DateOnly.FromDateTime(dateRange.End.Date)
+        RequestResult<Dictionary<DateOnly, TransactionModel[]>> requestResult = await _networkProvider.GetAsync<Dictionary<DateOnly, TransactionModel[]>>(
+            _networkSettings,
+            SelfFinanceApiRoutes.FinancialSummaryController.GetAllTransactions
         );
 
-        _transactionDictionary = _networkProvider.Get<Dictionary<DateOnly, TransactionModel[]>>(route).ResponseData;
+        if (requestResult.ResponseData?.Count > 0)
+        {
+            RequestResult<Dictionary<DateOnly, TransactionModel[]>> getDailyTransactionReportResult = await _networkProvider.GetAsync<Dictionary<DateOnly, TransactionModel[]>>(
+                _networkSettings,
+                SelfFinanceApiRoutes.FinancialSummaryController.MakeGetDailyReportRoute(DateOnly.FromDateTime(DateTime.Now))
+            );
+
+            _transactionDictionary = getDailyTransactionReportResult.ResponseData;
+
+            _isDataSelectorVisible = true;
+            _isDataInfoPanelVisible = requestResult.ResponseData.TryGetValue(DateOnly.FromDateTime(DateTime.Now), out _);
+        }
+        else
+        {
+            _isDataSelectorVisible = false;
+            _isDataInfoPanelVisible = false;
+        }
+    }
+
+    private async Task OnRangeSelectAsync(DateRange dateRange)
+    {
+        RequestResult<Dictionary<DateOnly, TransactionModel[]>> getDatePeriodReportResult = await _networkProvider.GetAsync<Dictionary<DateOnly, TransactionModel[]>>(
+            _networkSettings,
+            SelfFinanceApiRoutes.FinancialSummaryController.MakeGetDatePeriodReportRoute(
+                DateOnly.FromDateTime(dateRange.Start.Date),
+                DateOnly.FromDateTime(dateRange.End.Date)
+            )
+        );
+
+        _transactionDictionary = getDatePeriodReportResult.ResponseData;
+
+        if (_transactionDictionary.Count == 0)
+        {
+            _isDataInfoPanelVisible = false;
+        }
+        else
+        {
+            RequestResult<decimal> getExpenseAmountInDateRangeResult = await _networkProvider.GetAsync<decimal>(
+                _networkSettings,
+                SelfFinanceApiRoutes.FinancialSummaryController.MakeGetExpenseAmountInDateRangeRoute(
+                    DateOnly.FromDateTime(dateRange.Start.Date),
+                    DateOnly.FromDateTime(dateRange.End.Date)
+                )
+            );
+
+            RequestResult<decimal> getIncomeAmountInDateRangeResult = await _networkProvider.GetAsync<decimal>(
+                _networkSettings,
+                SelfFinanceApiRoutes.FinancialSummaryController.MakeGetIncomeAmountInDateRangeRoute(
+                    DateOnly.FromDateTime(dateRange.Start.Date),
+                    DateOnly.FromDateTime(dateRange.End.Date)
+                )
+            );
+
+            _isDataInfoPanelVisible = true;
+
+            _expenseAmount = getExpenseAmountInDateRangeResult.ResponseData;
+            _incomeAmount = getIncomeAmountInDateRangeResult.ResponseData;
+            _balance = _incomeAmount - _expenseAmount;
+        }
     }
 }

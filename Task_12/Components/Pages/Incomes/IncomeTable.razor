@@ -1,33 +1,40 @@
 ﻿@using System.Net.Http
 @using System.Net.Http.Json
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <td>@nameof(IncomeModel.Date)</td>
-            <td>@nameof(IncomeModel.Category)</td>
-            <td>@nameof(IncomeModel.Amount)</td>
-            <td>Update</td>
-            <td>Delete</td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (IncomeModel income in Incomes)
-        {
+@if (Incomes?.Count() > 0)
+{
+    <table class="table table-striped">
+        <thead>
             <tr>
-                <td>@income.Date</td>
-                <td>@income?.Category</td>
-                <td>@income.Amount</td>
-                <td>
-                    <button class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(income)">Update</button>
-                </td>
-                <td>
-                    <button class="btn btn-primary" @onclick="() => OnDelete.InvokeAsync(income.Id)">Delete</button>
-                </td>
+                <td>@nameof(IncomeModel.Date)</td>
+                <td>@nameof(IncomeModel.Category)</td>
+                <td>@nameof(IncomeModel.Amount)</td>
+                <td>Update</td>
+                <td>Delete</td>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (IncomeModel income in Incomes)
+            {
+                <tr>
+                    <td>@income.Date</td>
+                    <td>@income?.Category</td>
+                    <td>@income.Amount</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => OnUpdate.InvokeAsync(income)">Update</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => OnDelete.InvokeAsync(income.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <h1 class="text-center my-5 fs-3">No incomes found</h1>
+}
 
 @code 
 {

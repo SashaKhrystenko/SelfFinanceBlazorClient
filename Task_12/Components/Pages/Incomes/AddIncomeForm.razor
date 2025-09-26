@@ -3,9 +3,12 @@
         <label>Category:</label>
         <InputSelect class="form-select" @bind-Value="_income.Category">
             <option value="" disabled selected hidden></option>
-            @foreach (IncomeCategoryModel incomeCategory in incomeCategories)
+            @if (incomeCategories != null)
             {
-                <option value="@incomeCategory.Name">@incomeCategory.Name</option>
+                @foreach (IncomeCategoryModel incomeCategory in incomeCategories)
+                {
+                    <option value="@incomeCategory.Name">@incomeCategory.Name</option>
+                }
             }
         </InputSelect>
     </div>

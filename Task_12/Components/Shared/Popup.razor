@@ -1,14 +1,13 @@
-﻿<Modal @ref="_modal" Size="ModalSize.Small">
+﻿<Modal @ref="_modal">
     <HeaderTemplate>
         @_title
     </HeaderTemplate>
     <BodyTemplate>
-        <p>@_message</p>
+        <p class="overflow-auto">@_message</p>
     </BodyTemplate>
     <FooterTemplate>
         <Button Color="ButtonColor.Danger" @onclick="_modal.HideAsync">Close</Button>
     </FooterTemplate>
-
 </Modal>
 
 @code {
@@ -16,6 +15,22 @@
 
     private string _title;
     private string _message;
+
+    public void ShowPopupByResult(RequestResult requestResult, string textForError500Message = null)
+    {
+        if (requestResult.IsSuccess)
+        {
+            ShowSuccess(requestResult.Message);
+        }
+        else if (requestResult.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+        {
+            ShowError(textForError500Message);
+        }
+        else
+        {
+            ShowError(requestResult.Message);
+        }
+    }
 
     public void ShowSuccess(string message)
     {
