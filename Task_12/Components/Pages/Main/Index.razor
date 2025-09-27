@@ -68,7 +68,7 @@
 
         _transactionDictionary = getDatePeriodReportResult.ResponseData;
 
-        if (_transactionDictionary.Count == 0)
+        if (_transactionDictionary == null || _transactionDictionary.Count == 0)
         {
             _isDataInfoPanelVisible = false;
         }
