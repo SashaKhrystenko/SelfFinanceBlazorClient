@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Task_12.ApiRoutes
 {
     public static class SelfFinanceApiRoutes
     {
+        public const string IsoDate = "yyyy-MM-dd";
+
         public static class AuthorizationController
         {
             public const string Login = "/login";
@@ -140,7 +143,7 @@ namespace Task_12.ApiRoutes
             {
                 Dictionary<string, string> queryParams = new()
                 {
-                    { nameof(date), date.ToString() }
+                    { nameof(date), date.ToString(IsoDate, CultureInfo.InvariantCulture) }
                 };
 
                 return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-daily-report", queryParams);
@@ -150,8 +153,8 @@ namespace Task_12.ApiRoutes
             {
                 Dictionary<string, string> queryParams = new()
                 {
-                    { nameof(startDate), startDate.ToString() },
-                    { nameof(endDate), endDate.ToString() }
+                    { nameof(startDate), startDate.ToString(IsoDate, CultureInfo.InvariantCulture) },
+                    { nameof(endDate), endDate.ToString(IsoDate, CultureInfo.InvariantCulture) }
                 };
 
                 return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-date-period-report", queryParams);
@@ -161,8 +164,8 @@ namespace Task_12.ApiRoutes
             {
                 Dictionary<string, string> queryParams = new()
                 {
-                    { nameof(startDate), startDate.ToString() },
-                    { nameof(endDate), endDate.ToString() }
+                    { nameof(startDate), startDate.ToString(IsoDate, CultureInfo.InvariantCulture) },
+                    { nameof(endDate), endDate.ToString(IsoDate, CultureInfo.InvariantCulture) }
                 };
 
                 return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-income-amount-in-date-range", queryParams);
@@ -172,8 +175,8 @@ namespace Task_12.ApiRoutes
             {
                 Dictionary<string, string> queryParams = new()
                 {
-                    { nameof(startDate), startDate.ToString() },
-                    { nameof(endDate), endDate.ToString() }
+                    { nameof(startDate), startDate.ToString(IsoDate, CultureInfo.InvariantCulture) },
+                    { nameof(endDate), endDate.ToString(IsoDate, CultureInfo.InvariantCulture) }
                 };
 
                 return QueryHelpers.AddQueryString($"{_baseControllerRoute}/get-expense-amount-in-date-range", queryParams);

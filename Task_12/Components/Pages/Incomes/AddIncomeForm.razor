@@ -1,11 +1,11 @@
-﻿<EditForm Model="@_income" OnValidSubmit="AddIncome">
+﻿<EditForm Model="@_income" OnInvalidSubmit="OnInvalidSubmit" OnValidSubmit="AddIncome">
     <div class="pb-1">
         <label>Category:</label>
         <InputSelect class="form-select" @bind-Value="_income.Category">
             <option value="" disabled selected hidden></option>
-            @if (incomeCategories != null)
+            @if (IncomeCategories != null)
             {
-                @foreach (IncomeCategoryModel incomeCategory in incomeCategories)
+                @foreach (IncomeCategoryModel incomeCategory in IncomeCategories)
                 {
                     <option value="@incomeCategory.Name">@incomeCategory.Name</option>
                 }
@@ -15,23 +15,25 @@
 
     <div class="pb-1">
         <label>Amount:</label>
-        <InputNumber class="form-control no-spinner" @bind-Value="_income.Amount" />
+        <DecimalInput @ref="_decimalInput" class="form-control no-spinner" @bind-Value="_income.Amount" />
     </div>
 
     <button class="btn btn-primary pb-1" type="submit">Add</button>
 </EditForm>
 
 @code {
+    private IncomeModel _income = new();
+
+    private DecimalInput _decimalInput;
+
     [Parameter]
-    public IEnumerable<IncomeCategoryModel> incomeCategories { get; set; }
+    public IEnumerable<IncomeCategoryModel> IncomeCategories { get; set; }
 
     [Parameter]
     public EventCallback<HttpContent> OnIncomeAdded { get; set; }
 
     [Parameter]
     public EventCallback<string> OnInvalidDataInput { get; set; }
-
-    private IncomeModel _income = new();
 
     private async Task AddIncome()
     {
@@ -58,5 +60,21 @@
         await OnIncomeAdded.InvokeAsync(formDataContent);
 
         _income = new();
+    }
+
+    private async Task OnInvalidSubmit()
+    {
+        try
+        {
+            Convert.ToDecimal(_decimalInput.StringValue);
+        }
+        catch (OverflowException)
+        {
+            await OnInvalidDataInput.InvokeAsync("Number is too big.");
+        }
+        catch (FormatException)
+        {
+            await OnInvalidDataInput.InvokeAsync("Number has invalid format.");
+        }
     }
 }
