@@ -1,29 +1,31 @@
 ﻿@if (Transactions?.Count > 0)
 {
-    @foreach (DateOnly date in Transactions.Keys)
-    {
-        <div class="my-5">
-            <h4>@date</h4>
+    <div class="overflow-auto my-5">
+        @foreach (DateOnly date in Transactions.Keys)
+        {
+            <div class="mb-5">
+                <h4>@date</h4>
 
-            <table class="table">
-                <colgroup>
-                    <col class="w-25" />
-                    <col class="w-50" />
-                    <col class="w-25" />
-                </colgroup>
-                <tbody>
-                    @foreach (TransactionModel transaction in Transactions[date])
-                    {
-                        <tr>
-                            <td>@transaction.Date</td>
-                            <td>@transaction.Category</td>
-                            <td>@transaction.Amount</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+                <table class="table">
+                    <colgroup>
+                        <col class="w-25" />
+                        <col class="w-50" />
+                        <col class="w-25" />
+                    </colgroup>
+                    <tbody>
+                        @foreach (TransactionModel transaction in Transactions[date])
+                        {
+                            <tr>
+                                <td>@transaction.Date</td>
+                                <td>@transaction.Category</td>
+                                <td>@transaction.Amount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
 }
 else
 {

@@ -1,8 +1,10 @@
 ﻿@using BlazorDateRangePicker
 @using Task_12.Providers.Network.Settings
+@using Task_12.Components.Layout
 
 @page "/"
 @rendermode InteractiveServer
+@layout MainPageLayout
 
 <PageTitle>Home</PageTitle>
 
@@ -46,8 +48,9 @@
 
             _transactionDictionary = getDailyTransactionReportResult.ResponseData;
 
-            _isDataSelectorVisible = true;
             _isDataInfoPanelVisible = requestResult.ResponseData.TryGetValue(DateOnly.FromDateTime(DateTime.Now), out _);
+
+            await GetDataAndFillDataInfoPanel(DateTimeOffset.Now, DateTimeOffset.Now);
         }
         else
         {
@@ -74,27 +77,32 @@
         }
         else
         {
-            RequestResult<decimal> getExpenseAmountInDateRangeResult = await _networkProvider.GetAsync<decimal>(
-                _networkSettings,
-                SelfFinanceApiRoutes.FinancialSummaryController.MakeGetExpenseAmountInDateRangeRoute(
-                    DateOnly.FromDateTime(dateRange.Start.Date),
-                    DateOnly.FromDateTime(dateRange.End.Date)
-                )
-            );
-
-            RequestResult<decimal> getIncomeAmountInDateRangeResult = await _networkProvider.GetAsync<decimal>(
-                _networkSettings,
-                SelfFinanceApiRoutes.FinancialSummaryController.MakeGetIncomeAmountInDateRangeRoute(
-                    DateOnly.FromDateTime(dateRange.Start.Date),
-                    DateOnly.FromDateTime(dateRange.End.Date)
-                )
-            );
-
-            _isDataInfoPanelVisible = true;
-
-            _expenseAmount = getExpenseAmountInDateRangeResult.ResponseData;
-            _incomeAmount = getIncomeAmountInDateRangeResult.ResponseData;
-            _balance = _incomeAmount - _expenseAmount;
+            await GetDataAndFillDataInfoPanel(dateRange.Start, dateRange.End);
         }
+    }
+
+    private async Task GetDataAndFillDataInfoPanel(DateTimeOffset startDate, DateTimeOffset endDate)
+    {
+        RequestResult<decimal> getExpenseAmountInDateRangeResult = await _networkProvider.GetAsync<decimal>(
+            _networkSettings,
+            SelfFinanceApiRoutes.FinancialSummaryController.MakeGetExpenseAmountInDateRangeRoute(
+                DateOnly.FromDateTime(startDate.Date),
+                DateOnly.FromDateTime(endDate.Date)
+            )
+        );
+
+        RequestResult<decimal> getIncomeAmountInDateRangeResult = await _networkProvider.GetAsync<decimal>(
+            _networkSettings,
+            SelfFinanceApiRoutes.FinancialSummaryController.MakeGetIncomeAmountInDateRangeRoute(
+                DateOnly.FromDateTime(startDate.Date),
+                DateOnly.FromDateTime(endDate.Date)
+            )
+        );
+
+        _isDataInfoPanelVisible = true;
+
+        _expenseAmount = getExpenseAmountInDateRangeResult.ResponseData;
+        _incomeAmount = getIncomeAmountInDateRangeResult.ResponseData;
+        _balance = _incomeAmount - _expenseAmount;
     }
 }
