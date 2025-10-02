@@ -48,7 +48,7 @@
 
             _transactionDictionary = getDailyTransactionReportResult.ResponseData;
 
-            _isDataInfoPanelVisible = requestResult.ResponseData.TryGetValue(DateOnly.FromDateTime(DateTime.Now), out _);
+            _isDataSelectorVisible = true;
 
             await GetDataAndFillDataInfoPanel(DateTimeOffset.Now, DateTimeOffset.Now);
         }

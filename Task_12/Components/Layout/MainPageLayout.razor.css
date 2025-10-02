@@ -15,7 +15,7 @@ main {
 .article {
     height: calc(100vh - 3.5rem);
     display: grid;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: 60px 50px auto 100px;
 }
 
 .top-row {
