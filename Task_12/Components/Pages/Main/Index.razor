@@ -50,7 +50,10 @@
 
             _isDataSelectorVisible = true;
 
-            await GetDataAndFillDataInfoPanel(DateTimeOffset.Now, DateTimeOffset.Now);
+            if (getDailyTransactionReportResult.ResponseData.Count > 0)
+            {
+                await GetDataAndFillDataInfoPanel(DateTimeOffset.Now, DateTimeOffset.Now);
+            }
         }
         else
         {
