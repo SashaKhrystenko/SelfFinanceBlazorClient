@@ -1,0 +1,35 @@
+﻿@if (IsVisible)
+{
+    <div>
+        <table class="table info-block float-end">
+            <thead>
+                <tr>
+                    <td>Income</td>
+                    <td>Expense</td>
+                    <td>Balance</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@IncomeAmount</td>
+                    <td>@ExpenseAmount</td>
+                    <td>@BalanceAmount</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public decimal IncomeAmount { get; set; }
+
+    [Parameter]
+    public decimal ExpenseAmount { get; set; }
+
+    [Parameter]
+    public decimal BalanceAmount { get; set; }
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+}

@@ -1,0 +1,50 @@
+﻿<Modal @ref="_modal">
+    <HeaderTemplate>
+        @_title
+    </HeaderTemplate>
+    <BodyTemplate>
+        <p class="overflow-auto">@_message</p>
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Danger" @onclick="_modal.HideAsync">Close</Button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private Modal _modal;
+
+    private string _title;
+    private string _message;
+
+    public void ShowPopupByResult(RequestResult requestResult, string textForError500Message = null)
+    {
+        if (requestResult.IsSuccess)
+        {
+            ShowSuccess(requestResult.Message);
+        }
+        else if (requestResult.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+        {
+            ShowError(textForError500Message);
+        }
+        else
+        {
+            ShowError(requestResult.Message);
+        }
+    }
+
+    public void ShowSuccess(string message)
+    {
+        _title = "Success";
+        _message = message;
+
+        _modal.ShowAsync();
+    }
+    
+    public void ShowError(string message)
+    {
+        _title = "Error";
+        _message = message;
+
+        _modal.ShowAsync();
+    }
+}

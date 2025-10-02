@@ -1,0 +1,38 @@
+﻿<EditForm Model="_incomeCategory" OnSubmit="AddCategory">
+
+    <div class="my-2">
+        <label>Name:</label>
+        <TextInput Class="form-control" @bind-Value="_incomeCategory.Name" />
+    </div>
+
+    <Button Class="btn btn-primary my-2" Type="ButtonType.Submit">Add</Button>
+
+</EditForm>
+@code {
+    private IncomeCategoryModel _incomeCategory = new();
+
+    [Parameter]
+    public EventCallback<HttpContent> OnValidDataSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnInvalidDataSubmit { get; set; }
+
+    private async Task AddCategory()
+    {
+        if (string.IsNullOrWhiteSpace(_incomeCategory.Name))
+        {
+            await OnInvalidDataSubmit.InvokeAsync("Name is null or white space.");
+
+            return;
+        }
+
+        MultipartFormDataContent formDataContent = new()
+        {
+            { new StringContent(_incomeCategory.Name), "name" }
+        };
+
+        await OnValidDataSubmit.InvokeAsync(formDataContent);
+
+        _incomeCategory = new();
+    }
+}

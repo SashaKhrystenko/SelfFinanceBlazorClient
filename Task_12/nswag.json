@@ -1,0 +1,27 @@
+﻿{
+  "runtime": "Net8.0",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "https://localhost:7149/swagger/v1/swagger.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "className": "MyApiClient",
+      "namespace": "MyApp.GeneratedApi",
+      "generateClientClasses": true,
+      "generateDtoTypes": true,
+      "generateOptionalParameters": true,
+      "generateClientInterfaces": false,
+      "generateResponseClasses": false,
+      "wrapDtoExceptions": false,
+      "useHttpClientCreationMethod": false,
+      "injectHttpClient": false,
+      "disposeHttpClient": false,
+      "useBaseUrl": true,
+      "output": "ApiClient.cs"
+    }
+  }
+}

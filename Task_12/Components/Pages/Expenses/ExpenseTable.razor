@@ -1,0 +1,50 @@
+﻿@if (Expenses?.Count() > 0)
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>@nameof(ExpenseModel.Date)</td>
+                <td>@nameof(ExpenseModel.Category)</td>
+                <td>@nameof(ExpenseModel.Amount)</td>
+                <td>Update</td>
+                <td>Delete</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (ExpenseModel expense in Expenses)
+            {
+                <tr>
+                    <td>@expense.Date</td>
+                    <td>@expense?.Category</td>
+                    <td>@expense.Amount</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => OnUpdateButtonPressed.InvokeAsync(expense)">Update</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => DeleteExpenseAsync(expense.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-center my-5 fs-3">No expense found</p>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<ExpenseModel> Expenses { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnDeleteExpense { get; set; }
+
+    [Parameter]
+    public EventCallback<ExpenseModel> OnUpdateButtonPressed { get; set; }
+
+    private async Task DeleteExpenseAsync(Guid expenseId)
+    {
+        await OnDeleteExpense.InvokeAsync(expenseId);
+    }
+}

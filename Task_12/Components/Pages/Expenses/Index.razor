@@ -1,0 +1,152 @@
+﻿@page "/expenses"
+@using Microsoft.AspNetCore.Http
+@using Task_12.Providers.Network
+@rendermode InteractiveServer
+
+<PageTitle>Expenses</PageTitle>
+
+<h1>Expenses</h1>
+
+@if (_expenses?.Count() > 0)
+{
+    <ExpenseSortToolbar ExpenseSortOption="expenseSortOption" OnSelectbarChanges="UpdateExpenseListData" />
+}
+
+<ExpenseTable Expenses="_itemsOnPage" OnDeleteExpense="OnExpenseDeleteAsync" OnUpdateButtonPressed="ShowUpdateExpenseModal" />
+
+@if (_expenses?.Count() > 0)
+{
+    <Paginator @ref="_paginator" ItemList="_expenses" OnPageChange="ShowPageData" AmountOfItemsOnPage="_amountOfItemsOnList" />
+}
+
+<AddExpenseForm ExpenseCategories="@_expenseCategories" OnExpenseAdded="OnSuccessExpenseAddingAsync" OnInvalidDataInput="ShowErrorPopup" />
+
+<UpdateExpenseModal @ref="_updateExpenseModal" ExpenseCategories="_expenseCategories" OnInvalidSubmit="ShowErrorPopup" OnValidSubmit="UpdateExpense" />
+
+<Popup @ref="_popup"/>
+
+@code {
+    private ExpenseSortOption expenseSortOption = new()
+    {
+        ExpenseFilter = ExpenseFilter.Date,
+        ByDescending = true
+    };
+
+    private Paginator<ExpenseModel> _paginator;
+    private UpdateExpenseModal _updateExpenseModal;
+    private Popup _popup;
+
+    private IEnumerable<ExpenseModel> _expenses;
+    private IEnumerable<ExpenseCategoryModel> _expenseCategories;
+    private IEnumerable<ExpenseModel> _itemsOnPage;
+
+    private int _amountOfItemsOnList = 5;
+
+    [Inject]
+    private SelfFinanceNetworkSettings _selfFinanceNetworkSettings { get; set; }
+
+    [Inject]
+    private INetworkProvider _networkProvider { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        RequestResult<IEnumerable<ExpenseModel>> getExpensesResult = await _networkProvider.GetAsync<IEnumerable<ExpenseModel>>(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseController.MakeGetSortedExpensesRoute(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending)
+        );
+
+        RequestResult<IEnumerable<ExpenseCategoryModel>> getExpenseCategoriesResult = await _networkProvider.GetAsync<IEnumerable<ExpenseCategoryModel>>(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseCategoryController.MakeGetSortedExpenseCategoriesRoute(ExpenseCategoryFilter.Name, byDescending: false)
+        );
+
+        _expenses = getExpensesResult.ResponseData;
+        _expenseCategories = getExpenseCategoriesResult.ResponseData;
+
+        _itemsOnPage = _expenses.Take(_amountOfItemsOnList);
+    }
+
+    private async Task UpdateExpenseListData()
+    {
+        RequestResult<IEnumerable<ExpenseModel>> requestResult = await _networkProvider.GetAsync<IEnumerable<ExpenseModel>>(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseController.MakeGetSortedExpensesRoute(expenseSortOption.ExpenseFilter, expenseSortOption.ByDescending)
+        );
+
+        _expenses = requestResult.ResponseData;
+
+        ShowPageData();
+
+        StateHasChanged();
+    }
+
+    private async Task UpdateExpense(ExpenseModel expense)
+    {
+        RequestResult requestResult = await _networkProvider.PatchAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseController.UpdateExpense, 
+            expense
+        );
+
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Expense could not be updated");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
+
+            await UpdateExpenseListData();
+        }
+    }
+
+    private async Task OnSuccessExpenseAddingAsync(HttpContent httpContent)
+    {
+        RequestResult requestResult = await _networkProvider.PostAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseController.AddExpense, 
+            httpContent
+        );
+
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Expense could not be added");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
+
+            await UpdateExpenseListData();
+        }
+    }
+
+    private async Task OnExpenseDeleteAsync(Guid expenseId)
+    {
+        RequestResult requestResult = await _networkProvider.DeleteAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.ExpenseController.MakeDeleteExpenseRoute(expenseId)
+        );
+
+        _popup.ShowPopupByResult(requestResult);
+
+        await UpdateExpenseListData();
+    }
+
+    private void ShowErrorPopup(string message)
+    {
+        _popup.ShowError(message);
+    }
+
+    private void ShowUpdateExpenseModal(ExpenseModel expense)
+    {
+        _updateExpenseModal.ShowModal(expense);
+    }
+
+    private void ShowPageData()
+    {
+        _itemsOnPage = _expenses
+            .Skip((_paginator.CurrentPage - 1) * _amountOfItemsOnList)
+            .Take(_amountOfItemsOnList)
+        ;
+    }
+}

@@ -1,0 +1,120 @@
+﻿@page "/income-categories"
+@rendermode InteractiveServer
+
+<PageTitle>Income categories</PageTitle>
+
+<h1>Income categories</h1>
+
+@if(_incomeCategories?.Count() > 0)
+{
+    <IncomeCategorySortToolbar OnSortToolbarChanged="UpdateListDataAsync" SortOption="_sortOption" />
+}
+
+<IncomeCategoryTable IncomeCategories="_incomeCategories" OnCategoryDelete="OnCategoryDeletedAsync" OnUpdate="ShowUpdateIncomeCategoryModal" />
+
+<AddIncomeCategoryForm OnValidDataSubmit="OnCategoryAddedAsync" OnInvalidDataSubmit="ShowErrorPopup" />
+
+<UpdateIncomeCategoryModal @ref="_updateIncomeCategoryModal" OnValidSubmit="OnIncomeUpdate" OnInvalidSubmit="ShowErrorPopup" />
+
+<Popup @ref="_popup" />
+
+@code {
+    private IncomeCategorySortOption _sortOption = new()
+    {
+        IncomeCategoryFilter = IncomeCategoryFilter.Name,
+        ByDescending = false
+    };
+
+    private Popup _popup;
+    private UpdateIncomeCategoryModal _updateIncomeCategoryModal;
+
+    private IEnumerable<IncomeCategoryModel> _incomeCategories;
+
+    [Inject]
+    private SelfFinanceNetworkSettings _selfFinanceNetworkSettings { get; set; }
+
+    [Inject]
+    private INetworkProvider _networkProvider { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        RequestResult<IEnumerable<IncomeCategoryModel>> getIncomeCategoryResult = await _networkProvider.GetAsync<IEnumerable<IncomeCategoryModel>>(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.MakeGetSortedIncomeCategoriesRoute(_sortOption.IncomeCategoryFilter, _sortOption.ByDescending)
+        );
+
+        _incomeCategories = getIncomeCategoryResult.ResponseData;
+    }
+
+    private async Task OnCategoryAddedAsync(HttpContent httpContent)
+    {
+        RequestResult requestResult = await _networkProvider.PostAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.AddIncomeCategory,
+            httpContent
+        );
+
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Income category could not be added");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
+
+            await UpdateListDataAsync();
+        }
+    }
+
+    private async Task OnCategoryDeletedAsync(Guid categoryId)
+    {
+        RequestResult requestResult = await _networkProvider.DeleteAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.MakeDeleteIncomeCategorydRoute(categoryId)
+        );
+
+        _popup.ShowPopupByResult(requestResult);
+
+        await UpdateListDataAsync();
+    }
+
+    private async Task UpdateListDataAsync()
+    {
+        RequestResult<IEnumerable<IncomeCategoryModel>> requestResult = await _networkProvider.GetAsync<IEnumerable<IncomeCategoryModel>>(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.MakeGetSortedIncomeCategoriesRoute(_sortOption.IncomeCategoryFilter, _sortOption.ByDescending)
+        );
+
+        _incomeCategories = requestResult.ResponseData;
+    }
+
+    private async Task OnIncomeUpdate(IncomeCategoryModel editingCategory)
+    {
+        RequestResult requestResult = await _networkProvider.PatchAsync(
+            _selfFinanceNetworkSettings,
+            SelfFinanceApiRoutes.IncomeCategoryController.UpdateIncomeCategory,
+            editingCategory
+        );
+
+        if (requestResult.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            _popup.ShowPopupByResult(requestResult, "Income category could not be updated");
+        }
+        else
+        {
+            _popup.ShowPopupByResult(requestResult);
+
+            await UpdateListDataAsync();
+        }
+    }
+
+    private void ShowUpdateIncomeCategoryModal(IncomeCategoryModel editingCategory)
+    {
+        _updateIncomeCategoryModal.ShowModal(editingCategory);
+    }
+
+    private void ShowErrorPopup(string message)
+    {
+        _popup.ShowError(message);
+    }
+}

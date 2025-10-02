@@ -1,0 +1,80 @@
+﻿<EditForm Model="@_expense" OnInvalidSubmit="OnInvalidSubmit" OnValidSubmit="AddExpense">
+    <div class="pb-1">
+        <label>Category:</label>
+        <InputSelect class="form-select" @bind-Value="_expense.Category">
+            <option value="" disabled selected hidden></option>
+            @if(ExpenseCategories?.Count() > 0)
+            {
+                @foreach (ExpenseCategoryModel expenseCategory in ExpenseCategories)
+                {
+                    <option value="@expenseCategory.Name">@expenseCategory.Name</option>
+                }
+            }
+        </InputSelect>
+    </div>
+
+    <div class="pb-1">
+        <label>Amount:</label>
+        <DecimalInput @ref="_decimalInput" class="form-control no-spinner" @bind-Value="_expense.Amount" />
+    </div>
+
+    <button class="btn btn-primary pb-1" type="submit">Add</button>
+</EditForm>
+
+@code {
+    private ExpenseModel _expense = new();
+
+    private DecimalInput _decimalInput;
+
+    [Parameter]
+    public IEnumerable<ExpenseCategoryModel> ExpenseCategories { get; set; }
+
+    [Parameter]
+    public EventCallback<HttpContent> OnExpenseAdded { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnInvalidDataInput { get; set; }
+
+    private async Task AddExpense()
+    {
+        if (string.IsNullOrWhiteSpace(_expense.Category))
+        {
+            await OnInvalidDataInput.InvokeAsync("Category is empty.");
+
+            return;
+        }   
+
+        if (_expense.Amount <= 0)
+        {
+            await OnInvalidDataInput.InvokeAsync("Amount can't be less or equel zero.");
+
+            return;
+        }
+
+        MultipartFormDataContent formDataContent = new()
+        {
+            { new StringContent(_expense.Category), "category" },
+            { new StringContent(_expense.Amount.ToString()), "amount" }
+        };
+
+        await OnExpenseAdded.InvokeAsync(formDataContent);
+
+        _expense = new();
+    }
+
+    private async Task OnInvalidSubmit()
+    {
+        try
+        {
+            Convert.ToDecimal(_decimalInput.StringValue);
+        }
+        catch (OverflowException)
+        {
+            await OnInvalidDataInput.InvokeAsync("Number is too big.");
+        }
+        catch (FormatException)
+        {
+            await OnInvalidDataInput.InvokeAsync("Number has invalid format.");
+        }
+    }
+}

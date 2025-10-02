@@ -1,0 +1,18 @@
+﻿@using System.Diagnostics.CodeAnalysis
+@using System.Globalization
+
+@inherits InputNumber<decimal>
+
+@{
+    base.BuildRenderTree(__builder);
+}
+
+@code {
+    public string StringValue
+    {
+        get
+        {
+            return CurrentValueAsString;
+        }
+    }
+}

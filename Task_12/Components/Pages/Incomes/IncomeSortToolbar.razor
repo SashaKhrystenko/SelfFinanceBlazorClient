@@ -1,0 +1,57 @@
+﻿<div class="d-flex justify-content-end align-items-center">
+    <label class="me-2">Sort by</label>
+
+    <InputSelect class="form-select form-select-sm w-auto me-2" @bind-Value="_incomeFilter">
+        <option value="@IncomeFilter.Date">@IncomeFilter.Date</option>
+        <option value="@IncomeFilter.Category">@IncomeFilter.Category</option>
+        <option value="@IncomeFilter.Amount">@IncomeFilter.Amount</option>
+    </InputSelect>
+
+    <Button class="btn" @onclick="OnSortOrderButtonClicked">
+        @if (IncomeSortOption.ByDescending)
+        {
+            <i class="bi bi-sort-down"></i>
+        }
+        else
+        {
+            <i class="bi bi-sort-up"></i>
+        }
+    </Button>
+</div>
+
+@code {
+    private IncomeFilter _incomeFilter
+    {
+        get
+        {
+            return IncomeSortOption.IncomeFilter;
+        }
+        set
+        {
+            IncomeSortOption.IncomeFilter = value;
+
+            OnSelectbarChanges.InvokeAsync();
+        }
+    }
+
+    [Parameter]
+    public IncomeSortOption IncomeSortOption { get; set; }
+
+    [Parameter]
+    public EventCallback OnSelectbarChanges { get; set; }
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    private void OnSortOrderButtonClicked()
+    {
+        IncomeSortOption.ByDescending = !IncomeSortOption.ByDescending;
+
+        OnSelectbarChanges.InvokeAsync();
+    }
+
+    private void OnFilterChanged()
+    {
+        OnSelectbarChanges.InvokeAsync();
+    }
+}
