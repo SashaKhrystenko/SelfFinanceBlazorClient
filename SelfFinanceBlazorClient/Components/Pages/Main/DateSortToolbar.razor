@@ -1,0 +1,42 @@
+﻿@using BlazorDateRangePicker
+@using SelfFinanceBlazorClient
+@using SelfFinanceBlazorClient.ApiRoutes
+@using SelfFinanceBlazorClient.Components
+@using SelfFinanceBlazorClient.Components.Shared
+@using SelfFinanceBlazorClient.Interfaces
+@using SelfFinanceBlazorClient.Providers.Network
+@using SelfFinanceBlazorClient.Providers.Network.Settings
+@using SelfFinanceBlazorClient.SortOptions
+
+@if (IsVisible)
+{
+    <div class="d-flex justify-content-end align-items-center my-1">
+        <label class="me-2">Sort by date:</label>
+
+        <DateRangePicker class="form-select form-select-sm w-auto" StartDate="_startDate" EndDate="_endDate" OnRangeSelect="OnRangeChange" MaxDate="DateTimeOffset.Now" />
+    </div>
+}
+
+@code{
+    private DateTimeOffset _startDate = DateTimeOffset.Now;
+    private DateTimeOffset _endDate = DateTimeOffset.Now;
+
+    [Parameter]
+    public EventCallback<DateRange> OnRangeSelect { get; set; }
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    private async Task OnRangeChange(DateRange dateRange)
+    {
+        if (dateRange == null)
+        {
+            throw new ArgumentNullException(nameof(dateRange), $"{nameof(dateRange)} is null.");
+        }
+
+        _startDate = dateRange.Start;
+        _endDate = dateRange.End;
+
+        await OnRangeSelect.InvokeAsync(dateRange);
+    }
+}

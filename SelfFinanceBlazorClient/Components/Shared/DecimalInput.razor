@@ -1,0 +1,26 @@
+﻿@using System.Diagnostics.CodeAnalysis
+@using System.Globalization
+@using SelfFinanceBlazorClient
+@using SelfFinanceBlazorClient.ApiRoutes
+@using SelfFinanceBlazorClient.Components
+@using SelfFinanceBlazorClient.Components.Shared
+@using SelfFinanceBlazorClient.Interfaces
+@using SelfFinanceBlazorClient.Providers.Network
+@using SelfFinanceBlazorClient.Providers.Network.Settings
+@using SelfFinanceBlazorClient.SortOptions
+
+@inherits InputNumber<decimal>
+
+@{
+    base.BuildRenderTree(__builder);
+}
+
+@code {
+    public string StringValue
+    {
+        get
+        {
+            return CurrentValueAsString;
+        }
+    }
+}
